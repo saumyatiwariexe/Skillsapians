@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS custom properties — will be wired to tailwind.config tokens */
+:root {
+  --font-inter: "Inter", system-ui, sans-serif;
+  --font-mono: "Menlo", "Monaco", "Consolas", monospace;
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Code blocks */
+pre, code {
+  font-family: var(--font-mono);
+}
