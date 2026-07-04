@@ -15,10 +15,9 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // API body size: allow larger payloads for code snippets + answers
-  experimental: {
-    serverComponentsExternalPackages: ["@babel/parser", "@babel/traverse"],
-  },
+  // Next.js 15+: moved out of experimental
+  // Tells Next not to bundle these server-side Node packages
+  serverExternalPackages: ["@babel/parser", "@babel/traverse"],
 };
 
 export default nextConfig;
