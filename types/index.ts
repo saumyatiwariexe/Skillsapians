@@ -95,6 +95,7 @@ export interface GeneratedQuestion {
 
 export interface AnswerScoreResult {
   question_id: string;
+  user_answer?: string;
   semantic_similarity: number;   // 0–1, cosine sim
   entity_overlap: number;        // 0–1
   specificity_score: number;     // 0–1

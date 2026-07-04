@@ -1,36 +1,36 @@
 "use client";
 
-/**
- * Screen 4 — Verified Skill Report
- *
- * UI SHELL — big score, breakdown by module, per-question
- * expandable detail, flags, and share/copy link.
- *
- * This is the moment judges see in the demo.
- */
-
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import type { ReportResponse, VerifiedSkillReport, ForensicFlag } from "@/types";
+import { StatusChip, type StatusVariant } from "@/components/ui/StatusChip";
+import { StatCard } from "@/components/ui/StatCard";
+import { Button } from "@/components/ui/Button";
+import { Check, ChevronDown, ChevronUp, ExternalLink, ShieldCheck, FileSearch, Code2, AlertTriangle } from "lucide-react";
 
-function severityColor(severity: ForensicFlag["severity"]): string {
-  const map: Record<ForensicFlag["severity"], string> = {
-    high:   "flag-high",
-    medium: "flag-medium",
-    low:    "flag-low",
-    none:   "flag-none",
-  };
-  return map[severity];
+function getStatusBadgeParams(report: VerifiedSkillReport): { variant: StatusVariant; label: string } {
+  if (report.flagged_for_review) return { variant: "flagged", label: "Flagged for Review" };
+  if (report.verified_skill_score >= 85) return { variant: "verified", label: "Verified • Excellent" };
+  if (report.verified_skill_score >= 65) return { variant: "good", label: "Verified • Good" };
+  if (report.verified_skill_score >= 40) return { variant: "fair", label: "Fair" };
+  return { variant: "flagged", label: "Needs Review" };
+}
+
+function getScoreBandLabel(score: number): { label: string; class: string } {
+  if (score >= 85) return { label: "Strong match", class: "text-accent-green" };
+  if (score >= 65) return { label: "Partial match", class: "text-accent-blue" };
+  return { label: "Limited match", class: "text-accent-yellow" };
 }
 
 export default function ReportPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
   const [report,   setReport]   = useState<VerifiedSkillReport | null>(null);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
   const [copied,   setCopied]   = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedQ, setExpandedQ] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -50,178 +50,182 @@ export default function ReportPage() {
   }, [id]);
 
   async function handleCopyLink() {
-    if (!report) return;
+    if (!report?.share_url) return;
     try {
       await navigator.clipboard.writeText(report.share_url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback — select the URL field
-    }
+    } catch {}
   }
 
-  if (loading) {
-    return (
-      <main id="report-page">
-        <div id="loading-state">Loading your Verified Skill Report…</div>
-      </main>
-    );
-  }
+  if (loading) return <main className="w-full h-[50vh] flex items-center justify-center text-text-tertiary">Loading report…</main>;
+  if (error || !report) return <main className="w-full text-center text-accent-red mt-24">{error || "Not found"}</main>;
 
-  if (error || !report) {
-    return (
-      <main id="report-page">
-        <div id="error-state" role="alert">
-          <p>{error ?? "Report not found."}</p>
-        </div>
-      </main>
-    );
-  }
-
+  const badgeProps = getStatusBadgeParams(report);
   const activeFlags = report.flags.filter((f) => f.severity !== "none");
 
   return (
-    <main id="report-page">
-      {/* ── Report header ────────────────────────────────────────────────────── */}
-      <header id="report-header">
-        <h1>Verified Skill Report</h1>
-        <p id="report-repo">{report.repo}</p>
-        <span id="report-skill-area">{report.skill_area}</span>
+    <main className="w-full max-w-[840px] mx-auto pb-24">
+      
+      {/* Header */}
+      <header className="flex flex-col items-center text-center mb-12">
+        <a 
+          href={`https://${report.repo}`} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 font-body text-sm text-text-secondary hover:text-text-primary transition-colors mb-2 group"
+        >
+          {report.repo}
+          <ExternalLink className="w-3.5 h-3.5 text-text-tertiary group-hover:text-text-primary transition-colors" />
+        </a>
+        <h1 className="font-display font-medium text-2xl text-text-primary mb-8">
+          Verification Report
+        </h1>
+
+        <div className="flex flex-col items-center">
+          <span className="font-display font-bold text-[72px] leading-none text-text-primary tracking-tight mb-4">
+            {report.verified_skill_score}
+          </span>
+          <StatusChip variant={badgeProps.variant} label={badgeProps.label} className="scale-110 mb-4" />
+          <p className="font-body text-sm text-text-secondary mt-2">
+            Skill Area: <strong className="text-text-primary ml-1 capitalize">{report.skill_area}</strong>
+          </p>
+        </div>
       </header>
 
-      {/* ── Flagged-for-review banner ─────────────────────────────────────────── */}
+      {/* Flagged Banner */}
       {report.flagged_for_review && (
-        <section id="flagged-banner" role="alert">
-          <strong>⚠ Flagged for Review</strong>
-          <p>
-            The authenticity score for this repository is very low. This report
-            has been capped — the commit history shows patterns inconsistent
-            with organic development.
-          </p>
+        <section className="bg-accent-red/10 border border-accent-red/30 rounded-md p-5 mb-8 flex gap-4">
+          <AlertTriangle className="w-5 h-5 text-accent-red shrink-0 translate-y-0.5" />
+          <div>
+            <h3 className="font-body font-semibold text-accent-red text-sm mb-1">Flagged for Review</h3>
+            <p className="font-body text-sm text-text-primary/90 leading-relaxed">
+              The authenticity score for this repository is very low. The verified score has been capped because the commit history shows patterns inconsistent with organic development.
+            </p>
+          </div>
         </section>
       )}
 
-      {/* ── Score scorecard ──────────────────────────────────────────────────── */}
-      <section id="scorecard">
-        {/* Verified Skill Score — the big number */}
-        <div id="verified-score-block">
-          <span id="verified-score-label">Verified Skill Score</span>
-          <span id="verified-score-value">
-            {report.verified_skill_score}
-            <span id="score-suffix">/100</span>
-          </span>
-          <span id="skill-area-label">{report.skill_area}</span>
-        </div>
-
-        {/* Module breakdown */}
-        <div id="score-breakdown">
-          <div id="authenticity-score-block" className="score-module">
-            <span className="module-label">Git Authenticity</span>
-            <span className="module-score">{report.authenticity_score}/100</span>
-            <span className="module-weight">35% weight</span>
-          </div>
-          <div id="understanding-score-block" className="score-module">
-            <span className="module-label">Code Understanding</span>
-            <span className="module-score">{report.average_question_score.toFixed(0)}/100</span>
-            <span className="module-weight">65% weight</span>
-          </div>
-        </div>
+      {/* Sub-Scores Row */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        <StatCard 
+          title="Authencity" 
+          value={`${report.authenticity_score}/100`} 
+          description="Based on your commit history"
+          icon={<ShieldCheck className="w-4 h-4" />}
+        />
+        <StatCard 
+          title="Understanding" 
+          value={`${report.average_question_score.toFixed(0)}/100`} 
+          description="Average score of your explanations"
+          icon={<FileSearch className="w-4 h-4" />}
+        />
+        <StatCard 
+          title="Alignment" 
+          value={`${report.verified_skill_score}/100`} 
+          description="Overall semantic alignment"
+          icon={<Code2 className="w-4 h-4" />}
+        />
       </section>
 
-      {/* ── Forensic flags ───────────────────────────────────────────────────── */}
-      {activeFlags.length > 0 && (
-        <section id="flags-section">
-          <h2>Forensic Signals</h2>
-          <ul id="flags-list">
-            {activeFlags.map((flag) => (
-              <li
-                key={flag.signal}
-                id={`flag-${flag.signal}`}
-                className={`flag-item ${severityColor(flag.severity)}`}
-              >
-                <span className="flag-signal">{flag.signal.replace(/_/g, " ")}</span>
-                <span className="flag-value">
-                  {String(flag.value)}
-                  {flag.unit ? ` ${flag.unit}` : ""}
-                </span>
-                {flag.note && <p className="flag-note">{flag.note}</p>}
+      {/* Forensic Flags */}
+      <section className="mb-12">
+        <h2 className="font-display font-medium text-[15px] text-text-primary mb-4 pb-2 border-b border-subtle">
+          What we checked in your commit history
+        </h2>
+        {activeFlags.length === 0 ? (
+          <div className="flex items-center gap-3 text-text-secondary font-body text-sm bg-surface p-4 rounded-md border border-subtle">
+            <Check className="w-4 h-4 text-accent-green" />
+            No red flags found in your commit history.
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {activeFlags.map((flag, idx) => (
+              <li key={idx} className="flex gap-4 p-4 rounded-md bg-surface border border-subtle relative overflow-hidden">
+                <div className={`absolute left-0 top-0 bottom-0 w-1 ${flag.severity === 'high' ? 'bg-accent-red' : flag.severity === 'medium' ? 'bg-accent-orange' : 'bg-accent-yellow'}`} />
+                <AlertTriangle className={`w-4 h-4 shrink-0 translate-y-0.5 ${flag.severity === 'high' ? 'text-accent-red' : flag.severity === 'medium' ? 'text-accent-orange' : 'text-accent-yellow'}`} />
+                <div>
+                  <p className="font-body text-sm text-text-primary leading-relaxed">{flag.note}</p>
+                </div>
               </li>
             ))}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
 
-      {/* ── Per-question breakdown ────────────────────────────────────────────── */}
-      <section id="questions-section">
-        <h2>Question Breakdown</h2>
-        <ul id="questions-list">
-          {report.questions.map((q, i) => (
-            <li key={q.question_id} id={`question-item-${q.question_id}`}>
-              <button
-                id={`question-toggle-${q.question_id}`}
-                onClick={() =>
-                  setExpanded(expanded === q.question_id ? null : q.question_id)
-                }
-              >
-                <span className="question-number">Q{i + 1}</span>
-                <span className="question-preview">{q.question.slice(0, 80)}…</span>
-                {q.score && (
-                  <span className="question-score">
-                    {Math.round(q.score.final_question_score)}/100
-                  </span>
-                )}
-              </button>
+      {/* Question Breakdown */}
+      <section className="mb-12">
+        <h2 className="font-display font-medium text-[15px] text-text-primary mb-4 pb-2 border-b border-subtle">
+          How you answered
+        </h2>
+        <ul className="flex flex-col gap-3">
+          {report.questions.map((q, i) => {
+            const isExpanded = expandedQ === q.question_id;
+            const scoreNum = Math.round(q.score?.final_question_score ?? 0);
+            const band = getScoreBandLabel(scoreNum);
 
-              {expanded === q.question_id && (
-                <div id={`question-detail-${q.question_id}`} className="question-detail">
-                  <div className="question-file">{q.file}</div>
-                  <pre className="question-code"><code>{q.code_snippet}</code></pre>
-                  <p className="question-text">{q.question}</p>
+            return (
+              <li key={q.question_id} className="bg-surface border border-subtle rounded-md overflow-hidden transition-colors">
+                <button 
+                  onClick={() => setExpandedQ(isExpanded ? null : q.question_id)}
+                  className="w-full flex items-center gap-4 p-4 text-left hover:bg-surface-alt transition-colors focus:outline-none focus-visible:bg-surface-alt"
+                >
+                  <span className="font-body text-xs font-semibold text-text-tertiary shrink-0 w-6">Q{i+1}</span>
+                  <span className="font-body text-sm text-text-primary truncate flex-1 leading-normal">{q.question}</span>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <span className="font-body text-xs font-medium text-text-secondary">{scoreNum}/100</span>
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
+                  </div>
+                </button>
 
-                  {q.score && (
-                    <div className="question-scores-detail">
-                      <span>Semantic similarity: {(q.score.semantic_similarity * 100).toFixed(0)}%</span>
-                      <span>Entity overlap: {(q.score.entity_overlap * 100).toFixed(0)}%</span>
-                      <span>Answer specificity: {(q.score.specificity_score * 100).toFixed(0)}%</span>
-                      {q.score.ai_generated_flag && (
-                        <span id={`ai-flag-${q.question_id}`} className="ai-flag">
-                          ⚠ Possible AI-assisted answer
-                        </span>
-                      )}
+                {isExpanded && (
+                  <div className="p-4 pt-0 border-t border-subtle bg-surface/50">
+                    <div className="mt-4 mb-4">
+                      <div className="bg-surface-alt px-3 py-1.5 border border-subtle border-b-0 rounded-t-md font-mono text-[10px] text-text-tertiary inline-block">
+                        {q.file}
+                      </div>
+                      <pre className="p-3 bg-canvas border border-subtle rounded-md rounded-tl-none overflow-x-auto">
+                        <code className="font-mono text-[12px] text-text-secondary leading-relaxed">{q.code_snippet}</code>
+                      </pre>
                     </div>
-                  )}
-                </div>
-              )}
-            </li>
-          ))}
+
+                    <div className="mb-4">
+                      <h4 className="font-body text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">Your Answer</h4>
+                      <div className="bg-canvas/50 border border-subtle/50 rounded-md p-3 font-body text-[13px] text-text-primary leading-relaxed whitespace-pre-wrap">
+                        {q.score?.user_answer || "No answer provided"}
+                      </div>
+                    </div>
+
+                    {q.score && (
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2">
+                        <span className="font-body text-xs text-text-secondary">
+                          Match: <strong className={band.class}>{band.label}</strong>
+                        </span>
+                        {q.score.ai_generated_flag && (
+                          <span className="font-body text-xs font-medium text-accent-red flex items-center gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5" /> Possible AI-assisted answer
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
 
-      {/* ── Share section ──────────────────────────────────────────────────────── */}
-      <section id="share-section">
-        <h2>Share this report</h2>
-        <div id="share-url-field">
-          <input
-            id="share-url-input"
-            type="text"
-            value={report.share_url}
-            readOnly
-          />
-          <button id="copy-link-button" onClick={handleCopyLink}>
-            {copied ? "Copied!" : "Copy link"}
-          </button>
-        </div>
+      {/* Actions */}
+      <section className="flex flex-col sm:flex-row items-center gap-4 mt-8 pt-8 border-t border-subtle">
+        <Button onClick={handleCopyLink} className="w-full sm:w-auto">
+          {copied ? "Copied to clipboard!" : "Copy Share Link"}
+        </Button>
+        <Button variant="ghost" onClick={() => router.push("/")} className="w-full sm:w-auto">
+          Analyze another repo
+        </Button>
       </section>
 
-      {/* ── Verified badge ─────────────────────────────────────────────────────── */}
-      <section id="badge-section">
-        <div id="verified-badge">
-          <span id="badge-label">Verified Skill Badge</span>
-          <span id="badge-score">{report.verified_skill_score}/100</span>
-          <span id="badge-skill">{report.skill_area}</span>
-          <span id="badge-repo">{report.repo}</span>
-        </div>
-      </section>
     </main>
   );
 }

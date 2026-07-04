@@ -11,9 +11,9 @@ import type { ReportResponse, VerifiedSkillReport, SkillArea } from "@/types";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ReportResponse>> {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json(
@@ -73,6 +73,7 @@ export async function GET(
       score: q.answered_at
         ? {
             question_id:          q.question_id,
+            user_answer:          q.user_answer ?? "",
             semantic_similarity:  q.semantic_similarity ?? 0,
             entity_overlap:       q.entity_overlap ?? 0,
             specificity_score:    q.specificity_score ?? 0,

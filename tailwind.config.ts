@@ -8,58 +8,56 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // ── Color Palette ────────────────────────────────────────
       colors: {
-        // Primary brand — will be updated by user's design spec
-        brand: {
-          50:  "hsl(220, 100%, 97%)",
-          100: "hsl(220, 100%, 93%)",
-          200: "hsl(220, 90%, 85%)",
-          300: "hsl(220, 85%, 72%)",
-          400: "hsl(220, 80%, 60%)",
-          500: "hsl(220, 75%, 50%)",
-          600: "hsl(220, 80%, 42%)",
-          700: "hsl(220, 85%, 34%)",
-          800: "hsl(220, 90%, 26%)",
-          900: "hsl(220, 95%, 18%)",
-        },
-        // Surface / neutral
-        surface: {
-          DEFAULT: "hsl(220, 15%, 8%)",
-          subtle: "hsl(220, 12%, 12%)",
-          muted:  "hsl(220, 10%, 18%)",
-          border: "hsl(220, 10%, 22%)",
-        },
-        // Semantic
-        success: "hsl(142, 71%, 45%)",
-        warning: "hsl(45,  93%, 47%)",
-        danger:  "hsl(0,   84%, 60%)",
+        canvas: "var(--bg-canvas)",
+        surface: "var(--bg-surface)",
+        "surface-alt": "var(--bg-surface-alt)",
+        subtle: "var(--border-subtle)",
+        
+        "text-primary": "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+        "text-tertiary": "var(--text-tertiary)",
+        
+        "accent-purple": "var(--accent-purple)",
+        "accent-blue": "var(--accent-blue)",
+        "accent-green": "var(--accent-green)",
+        "accent-orange": "var(--accent-orange)",
+        "accent-red": "var(--accent-red)",
+        "accent-yellow": "var(--accent-yellow)",
       },
-      // ── Typography ───────────────────────────────────────────
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "Menlo", "monospace"],
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
-      // ── Animation ────────────────────────────────────────────
+      spacing: {
+        1: "var(--space-1)",
+        2: "var(--space-2)",
+        3: "var(--space-3)",
+        4: "var(--space-4)",
+        5: "var(--space-5)",
+        6: "var(--space-6)",
+        8: "var(--space-8)",
+        10: "var(--space-10)",
+      },
+      borderRadius: {
+        sm: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        full: "var(--radius-full)",
+      },
       keyframes: {
         "fade-in": {
           from: { opacity: "0", transform: "translateY(8px)" },
           to:   { opacity: "1", transform: "translateY(0)" },
         },
-        "pulse-ring": {
-          "0%, 100%": { opacity: "1" },
-          "50%":      { opacity: "0.4" },
-        },
-        shimmer: {
-          from: { backgroundPosition: "200% 0" },
-          to:   { backgroundPosition: "-200% 0" },
-        },
       },
       animation: {
-        "fade-in":    "fade-in 0.4s ease-out forwards",
-        "pulse-ring": "pulse-ring 1.6s cubic-bezier(0.4,0,0.6,1) infinite",
-        shimmer:      "shimmer 2s linear infinite",
+        "fade-in": "fade-in 0.2s ease-out forwards",
       },
+      maxWidth: {
+        content: "840px",
+        wide: "1200px",
+      }
     },
   },
   plugins: [],

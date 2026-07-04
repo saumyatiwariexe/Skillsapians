@@ -2,25 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS custom properties — will be wired to tailwind.config tokens */
 :root {
-  --font-inter: "Inter", system-ui, sans-serif;
-  --font-mono: "Menlo", "Monaco", "Consolas", monospace;
+  /* Base */
+  --bg-canvas: #121212;
+  --bg-surface: #1B1B1E;
+  --bg-surface-alt: #202024;
+  --border-subtle: #2A2A2E;
+  
+  --text-primary: #F5F5F7;
+  --text-secondary: #A0A0A8;
+  --text-tertiary: #6B6B72;
+
+  /* Accents */
+  --accent-purple: #7C6CF6;
+  --accent-blue: #4C8DFF;
+  --accent-green: #34C77B;
+  --accent-orange: #F5A623;
+  --accent-red: #F0554C;
+  --accent-yellow: #F5C842;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-full: 999px;
 }
 
-/* Reset */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: var(--font-inter);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-body), system-ui, sans-serif;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Code blocks */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  line-height: 1.2;
+}
+
 pre, code {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.1s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.1s !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,33 +1,18 @@
 "use client";
 
-/**
- * Screen 2 — Analyzing
- *
- * UI SHELL — shows progress states while /api/analyze runs.
- * Navigates to questions screen on success.
- *
- * Progress states (shown in sequence):
- *   1. "Connecting to GitHub..."
- *   2. "Scanning commit history..."
- *   3. "Running git forensics..."
- *   4. "Parsing code structure..."
- *   5. "Generating questions..."
- */
-
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AnalyzeResponse } from "@/types";
+import { Loader2, CheckCircle2, Circle } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 const PROGRESS_STEPS = [
-  { id: "step-github",    label: "Connecting to GitHub…"        },
-  { id: "step-commits",   label: "Scanning commit history…"     },
-  { id: "step-forensics", label: "Running git forensics…"       },
-  { id: "step-ast",       label: "Parsing code structure…"      },
-  { id: "step-questions", label: "Generating your questions…"   },
+  { id: "step-commits",   label: "Checking commit history"     },
+  { id: "step-ast",       label: "Reading your code structure"      },
+  { id: "step-questions", label: "Preparing questions"   },
 ];
 
-// Simulate progress for UX — real API is running in background
-const STEP_DELAY_MS = 1800;
+const STEP_DELAY_MS = 2500;
 
 export default function AnalyzingPage() {
   const router       = useRouter();
@@ -44,7 +29,6 @@ export default function AnalyzingPage() {
       return;
     }
 
-    // Advance the visible progress steps for UX
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
         if (prev < PROGRESS_STEPS.length - 1) return prev + 1;
@@ -52,7 +36,6 @@ export default function AnalyzingPage() {
       });
     }, STEP_DELAY_MS);
 
-    // Kick off the real API call
     async function runAnalysis() {
       try {
         const res = await fetch("/api/analyze", {
@@ -68,7 +51,6 @@ export default function AnalyzingPage() {
         }
 
         clearInterval(stepInterval);
-        // Navigate to question screen
         router.replace(`/questions/${data.report_id}`);
       } catch (err) {
         clearInterval(stepInterval);
@@ -77,47 +59,55 @@ export default function AnalyzingPage() {
     }
 
     runAnalysis();
-
     return () => clearInterval(stepInterval);
   }, [repoUrl, skillArea, router]);
 
   if (error) {
     return (
-      <main id="analyzing-page">
-        <section id="error-state">
-          <h1>Analysis failed</h1>
-          <p id="error-detail">{error}</p>
-          <button id="try-again-button" onClick={() => router.push("/")}>
+      <main className="w-full max-w-[480px] mx-auto pt-[10vh]">
+        <section className="bg-surface border border-subtle rounded-md p-8 text-center">
+          <div className="w-12 h-12 bg-accent-red/15 text-accent-red rounded-full flex items-center justify-center mx-auto mb-4">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+          <h1 className="font-display font-medium text-xl text-text-primary mb-2">Analysis failed</h1>
+          <p className="font-body text-sm text-text-secondary mb-8">{error}</p>
+          <Button onClick={() => router.push("/")} className="w-full">
             Try a different repo
-          </button>
+          </Button>
         </section>
       </main>
     );
   }
 
   return (
-    <main id="analyzing-page">
-      <section id="progress-section">
-        <h1>Analyzing your repository</h1>
-        <p id="repo-label">{repoUrl}</p>
+    <main className="w-full max-w-[480px] mx-auto pt-[10vh]">
+      <section className="bg-surface border border-subtle rounded-md p-8">
+        <div className="mb-8">
+          <h1 className="font-display font-medium text-xl text-text-primary mb-1">Analyzing your repo…</h1>
+          <p className="font-body text-xs text-text-tertiary truncate">{repoUrl}</p>
+        </div>
 
-        {/* Progress steps */}
-        <ol id="progress-steps">
-          {PROGRESS_STEPS.map((step, i) => (
-            <li
-              key={step.id}
-              id={step.id}
-              data-state={
-                i < currentStep ? "done" : i === currentStep ? "active" : "pending"
-              }
-            >
-              <span className="step-indicator" aria-hidden="true" />
-              <span className="step-label">{step.label}</span>
-            </li>
-          ))}
-        </ol>
+        <ul className="flex flex-col gap-6 mb-8">
+          {PROGRESS_STEPS.map((step, i) => {
+            const isDone = i < currentStep;
+            const isActive = i === currentStep;
+            const isPending = i > currentStep;
+            
+            return (
+              <li key={step.id} className="flex items-center gap-4">
+                <div className="shrink-0 flex items-center justify-center w-6 h-6">
+                  {isDone && <CheckCircle2 className="text-accent-green w-5 h-5" />}
+                  {isActive && <Loader2 className="text-accent-purple w-5 h-5 animate-spin" />}
+                  {isPending && <Circle className="text-border-subtle w-5 h-5" />}
+                </div>
+                <span className={`font-body text-sm transition-colors duration-300 ${isDone ? "text-text-primary" : isActive ? "text-text-primary font-medium" : "text-text-tertiary"}`}>
+                  {step.label}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
 
-        <p id="patience-message">This takes 15–30 seconds. Hang tight.</p>
       </section>
     </main>
   );

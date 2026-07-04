@@ -1,26 +1,15 @@
 "use client";
 
-/**
- * Screen 1 — Landing / Input
- *
- * UI SHELL — layout and state wiring only. No design applied yet.
- * User's design spec will fill in styles.
- *
- * State:
- *   repoUrl    — controlled input value
- *   skillArea  — selected skill area
- *   error      — validation/API error message
- *   loading    — analysis in progress
- */
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SkillArea, AnalyzeResponse } from "@/types";
+import type { SkillArea } from "@/types";
+import { Button } from "@/components/ui/Button";
+import { HelpCircle } from "lucide-react";
 
 const SKILL_AREAS: { value: SkillArea; label: string }[] = [
-  { value: "frontend",  label: "Frontend"   },
-  { value: "backend",   label: "Backend"    },
-  { value: "fullstack", label: "Full-Stack"  },
+  { value: "frontend",  label: "Frontend Dev"   },
+  { value: "backend",   label: "Backend Dev"    },
+  { value: "fullstack", label: "Full-Stack Dev"  },
   { value: "data",      label: "Data / ML"  },
 ];
 
@@ -37,15 +26,18 @@ export default function LandingPage() {
       setError("Please enter a GitHub repository URL.");
       return;
     }
+    
+    // Basic format check
+    if (!repoUrl.includes("github.com/")) {
+      setError("That doesn't look like a public GitHub repo link.");
+      return;
+    }
 
     setError(null);
     setLoading(true);
 
     try {
-      // Navigate to analyzing screen first — then kick off the API call there
-      router.push(
-        `/analyzing?repo=${encodeURIComponent(repoUrl)}&skill=${skillArea}`
-      );
+      router.push(`/analyzing?repo=${encodeURIComponent(repoUrl)}&skill=${skillArea}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);
@@ -53,87 +45,80 @@ export default function LandingPage() {
   }
 
   return (
-    <main id="landing-page">
-      {/* ── Hero copy ─────────────────────────────────────────────────────── */}
-      <section id="hero-section">
-        <h1>Prove what you actually built.</h1>
-        <p>
-          Skillsapians verifies your skills from the GitHub repo you already
-          shipped — not a synthetic test. Paste a repo, answer a few questions
-          about your own code, get a shareable Verified Skill badge.
+    <main className="w-full max-w-[480px] mx-auto pt-[10vh]">
+      
+      <section className="text-center mb-10">
+        <h1 className="font-display font-medium text-2xl text-text-primary mb-3">
+          Verify a skill from real work you've built.
+        </h1>
+        <p className="font-body text-sm text-text-secondary leading-relaxed">
+          Paste a public GitHub repo. We'll check what you actually built — not what you can memorize.
         </p>
       </section>
 
-      {/* ── Input form ────────────────────────────────────────────────────── */}
-      <section id="input-section">
-        <form id="analyze-form" onSubmit={handleAnalyze}>
-          {/* Repo URL */}
-          <div id="repo-url-field">
-            <label htmlFor="repo-url-input">GitHub Repository URL</label>
+      <section className="bg-surface border border-subtle rounded-md p-6">
+        <form onSubmit={handleAnalyze} className="flex flex-col gap-6">
+          
+          <div className="flex flex-col gap-2">
+            <label htmlFor="repo-url-input" className="font-body text-xs text-text-secondary pl-1">
+              GitHub Repository URL
+            </label>
             <input
               id="repo-url-input"
               type="url"
-              placeholder="https://github.com/your-username/your-project"
+              className="w-full bg-canvas border border-subtle rounded-md px-4 py-3 font-body text-sm text-text-primary focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-surface transition-all placeholder:text-text-tertiary"
+              placeholder="https://github.com/username/repo"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               disabled={loading}
               required
             />
+            {error && (
+              <p className="text-accent-red font-body text-xs pl-1 mt-1 font-medium">{error}</p>
+            )}
           </div>
 
-          {/* Skill area selector */}
-          <div id="skill-area-field">
-            <label htmlFor="skill-area-select">Skill Area to Verify</label>
-            <select
-              id="skill-area-select"
-              value={skillArea}
-              onChange={(e) => setSkillArea(e.target.value as SkillArea)}
-              disabled={loading}
-            >
-              {SKILL_AREAS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div id="error-message" role="alert">
-              {error}
+          <div className="flex flex-col gap-2">
+             <label htmlFor="skill-area-select" className="font-body text-xs text-text-secondary pl-1">
+              Skill Area to Verify
+            </label>
+            <div className="relative">
+              <select
+                id="skill-area-select"
+                className="w-full bg-canvas border border-subtle rounded-md px-4 py-3 font-body text-sm text-text-primary focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-surface appearance-none transition-all cursor-pointer disabled:opacity-50"
+                value={skillArea}
+                onChange={(e) => setSkillArea(e.target.value as SkillArea)}
+                disabled={loading}
+              >
+                {SKILL_AREAS.map((s) => (
+                  <option key={s.value} value={s.value} className="bg-surface text-text-primary">
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-secondary">
+                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Submit */}
-          <button
-            id="analyze-button"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? "Starting analysis…" : "Analyze My Repo →"}
-          </button>
+          <Button type="submit" disabled={loading} className="w-full mt-2">
+            {loading ? "Starting analysis…" : "Analyze Repo"}
+          </Button>
+
+          <div className="flex justify-center mt-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 text-xs font-body text-text-tertiary hover:text-text-secondary transition-colors focus:outline-none focus-visible:underline"
+              onClick={() => alert("1. Git Forensics checks your commits.\n2. We parse the code structure.\n3. We ask you questions about your logic.\n\nAll automated, no raw LLM grading.")}
+            >
+              <HelpCircle size={14} />
+              <span>What do we check?</span>
+            </button>
+          </div>
         </form>
       </section>
 
-      {/* ── How it works ──────────────────────────────────────────────────── */}
-      <section id="how-it-works">
-        <h2>How it works</h2>
-        <ol>
-          <li id="step-forensics">
-            <strong>Git Forensics</strong>
-            <span>We analyze your commit history to confirm you actually built this — not dumped generated code.</span>
-          </li>
-          <li id="step-questions">
-            <strong>Code Questions</strong>
-            <span>We parse your repo's AST and generate questions about specific decisions in your actual code — not generic trivia.</span>
-          </li>
-          <li id="step-score">
-            <strong>Verified Score</strong>
-            <span>Your answers are scored against what your code actually does using embedding similarity — not an AI's opinion.</span>
-          </li>
-        </ol>
-      </section>
     </main>
   );
 }
