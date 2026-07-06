@@ -44,10 +44,11 @@ The three scores combine into one **Verified Skill Score (0–100)** per skill a
 
 **Non-goals (cut ruthlessly for time):**
 - Multi-language support (stretch goal only, mention in pitch, don't build).
-- User accounts / auth (use a shareable link with a random ID instead).
 - Payment, teams, enterprise dashboards.
 - Perfect plagiarism/AI-detection accuracy — you need a *directionally convincing* signal, not a legally defensible one.
 - Handling massive repos (cap analysis to N files / a size limit, document it as a known constraint).
+
+> **Scope change (v1.1):** User accounts/auth are now **in scope**. Reports are still shareable by link, but signed-in users (GitHub or Google via Supabase Auth) can claim reports into a persistent **Profile / Report Card** that aggregates scores, points, and earned badges. See §17.
 
 ---
 
@@ -368,6 +369,8 @@ CREATE TABLE questions (
 );
 ```
 
+> **v1.1 schema additions** (full DDL in `supabase_schema.sql`): a `profiles` table keyed to `auth.users`; `reports.user_id` (nullable, claimed after sign-in), `point_score`, and `badge` (JSONB); on `questions`, `time_taken_seconds`, `tab_out_count`, `time_score`, and `integrity_penalty` for anti-cheat scoring.
+
 ---
 
 ## 10. API Design
@@ -382,10 +385,11 @@ CREATE TABLE questions (
 
 ## 11. Frontend Flow (Screens)
 
-1. **Landing / Input screen** — paste GitHub URL, pick skill area (dropdown: Frontend / Backend / Full-stack / Data), "Analyze" button.
-2. **Analyzing screen** — loading state while Modules A + B run (show progress: "Scanning commit history…", "Identifying key logic…").
-3. **Question screen** — one question at a time, code snippet shown alongside, free-text answer box, "Submit" button, progress indicator (Q3 of 6).
-4. **Report screen** — big score, breakdown by module (authenticity vs understanding), per-question detail (expandable), any flags called out visually, share/copy-link button, "Verified Skill Badge" visual.
+1. **Landing / Input screen** — paste GitHub URL, enter a free-text **Skill Area** (e.g. "AI, ML, React, Overall") so questions are directed at that domain, "Analyze" button.
+2. **Analyzing screen** — parallel load: `/api/repo-metadata` instantly reveals repo stats (owner, languages, size) via a vertical step-by-step reveal line, while `/api/analyze` (Modules A + B) runs in the background.
+3. **Question screen (proctored)** — explicit **"Start Verification"** button requests Fullscreen; a per-question `setInterval` timer tracks time, and a `visibilitychange` listener detects tab-outs (increments a warning counter + shows a harsh alert modal). One question at a time, code snippet shown alongside, free-text answer, progress indicator (Q3 of 10).
+4. **Report screen** — big score, breakdown by module (authenticity vs understanding), assigned **badge** (e.g. "AI Expert", "Fast Implementer") + **point score**, per-question detail (expandable), flags called out visually, share/copy-link button, and a **Sign-In (GitHub/Google) CTA** to save the report to a Profile.
+5. **Profile / Report Card** — signed-in dashboard aggregating all claimed reports: average score, total points, earned badges, per-report cards.
 
 ---
 
@@ -429,7 +433,7 @@ CREATE TABLE questions (
 2. **Live forensics (30s):** Paste a real repo. Show the authenticity score and flags appearing — "Notice: 94% of this code arrived in one commit. That's a red flag."
 3. **Live question (45s):** Show a generated question tied to an actual function, visible on screen.
 4. **The gotcha (45s):** Answer once vaguely/generic → low score, "flagged as surface-level." Answer again with real specificity → high score. This side-by-side is your best 30 seconds — rehearse it.
-5. **The report (15s):** Show the final shareable Verified Skill badge/profile.
+5. **The report (15s):** Show the final score, assigned badge + points, and the Sign-In CTA that saves it to a shareable Report Card profile.
 6. **Close (15s):** "This is what 'skills over degrees' actually looks like when you can't fake it."
 
 ---
@@ -451,3 +455,26 @@ CREATE TABLE questions (
 - **Technical depth:** Three genuinely distinct engineering components (deterministic forensics, AST analysis, embedding geometry) — defensible against "it's just a wrapper" scrutiny.
 - **Demoability:** The vague-vs-real-answer moment is a strong, visual, judge-legible payoff.
 - **Differentiation:** Existing skills-verification products (LinkedIn, HackerRank, TestGorilla) all test in isolation from real work; this verifies real work directly, and adds fraud detection nobody else in that space centers as the headline feature.
+
+---
+
+## 17. Auth, Profiles & the "Report Card" (v1.1)
+
+### 17.1 Why accounts
+A shareable link proves one report. A **signed-in profile** turns many reports into a portable, recruiter-facing **Report Card** — the aggregate of a person's verified skills across repos. This is the natural end state of the "prove what you can do" thesis and makes the output sticky beyond a single link.
+
+### 17.2 Sign-in
+- **Providers:** GitHub and Google, via **Supabase Auth** (`signInWithOAuth`). (User review approved GitHub + Google over GitHub-only.)
+- **Session:** browser Supabase client; a `AuthProvider` context exposes `user` app-wide.
+- **Profile row:** created automatically on first login via a `handle_new_user` DB trigger (copies `username`, `full_name`, `avatar_url` from OAuth metadata). RLS: profiles readable/updatable only by the owner; a public read policy lets anyone view a shared Report Card.
+
+### 17.3 Claiming & aggregating
+- A completed report is claimed with `POST /api/report/[id]/claim` (sets `reports.user_id`). Unclaimed reports remain public by link.
+- `GET /api/profile` returns the signed-in user's reports + totals (`report_count`, `average_score`, `total_points`, `badge_count`).
+- The `/profile` page renders the Report Card: header with avatar/name/company, four aggregate stat tiles, and a card list of verified reports (score, repo, skill area, badge) linking back to each report.
+
+### 17.4 Badges & points
+- On completion, `lib/badges.ts` assigns one `ReportBadge` (e.g. "AI Expert", "Fast Implementer", "Verified Builder") and a `point_score` (weights verified score, question score, authenticity, speed bonus, minus tab-out penalty). Scoring logic lives in `lib/embeddings/scorer.ts` (`time_score`, `integrity_penalty`).
+
+### 17.5 Anti-cheat surface
+- The proctored question screen (§11.3) records `time_taken_seconds` per question and a `tab_out_count` (via `visibilitychange`). Both feed `computeTimeScore` + `computeIntegrityPenalty`, and `tab_out_count >= 3` forces a "Review Needed" badge and caps the verified score at 40. This is surfaced honestly on the report ("Integrity Warning" history) rather than hidden.

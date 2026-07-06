@@ -69,6 +69,8 @@ export function buildReport(params: {
     verified_skill_score,
     authenticity_score:     forensics.authenticity_score,
     average_question_score,
+    point_score:            0,
+    badge:                  null,
     flagged_for_review,
     flags:                  forensics.flags,
     questions:              qWithScores,

@@ -28,6 +28,13 @@ Three independent signals:
 - **Database**: Supabase (Postgres)
 - **Hosting**: Vercel
 - **GitHub API**: Octokit REST client (server-side token)
+- **Auth**: Supabase Auth (GitHub + Google OAuth) — saves reports to a shareable Profile "Report Card"
+
+### Auth / Profiles
+
+Users sign in with **GitHub** or **Google** (Supabase Auth). On first login a `profiles` row is created (DB trigger `handle_new_user`). Completed reports can be claimed (`POST /api/report/[id]/claim`) and viewed on `/profile`, the aggregate "Report Card" dashboard with total points, average score, and earned badges.
+
+Enable the **GitHub** and **Google** providers in the Supabase dashboard and add `${NEXT_PUBLIC_APP_URL}/api/auth/callback` to the redirect allow-list.
 
 ---
 
@@ -75,14 +82,20 @@ npm run dev
 ```
 skillsapians/
 ├── app/                    # Next.js App Router pages + API routes
-│   ├── page.tsx            # Landing / input screen
-│   ├── analyzing/          # Analyzing screen (loading state)
-│   ├── questions/[id]/     # Question screen (one at a time)
-│   ├── report/[id]/        # Final report + share link
+│   ├── page.tsx            # Landing / input screen (skill area = free text)
+│   ├── analyzing/          # Analyzing screen: parallel repo-metadata + animated reveal
+│   ├── questions/[id]/     # Proctored question screen (fullscreen, timer, tab-out)
+│   ├── report/[id]/        # Final report + badge + save-to-profile CTA
+│   ├── profile/            # Report Card dashboard (aggregate of saved reports)
+│   ├── reports/            # Lists saved reports (redirects to /profile)
 │   └── api/
 │       ├── analyze/        # POST: kicks off Module A + B
-│       ├── answer/         # POST: runs Module C for one answer
-│       └── report/[id]/    # GET: full aggregated report
+│       ├── answer/         # POST: runs Module C for one answer (time + tab-out)
+│       ├── repo-metadata/  # GET: fast GitHub languages/owner/size
+│       ├── report/[id]/    # GET: full aggregated report
+│       ├── report/[id]/claim/ # POST: associate report with signed-in user
+│       ├── profile/        # GET: signed-in user's reports + totals
+│       └── auth/callback/  # GET: Supabase OAuth code exchange
 ├── lib/
 │   ├── github/             # GitHub REST API client
 │   ├── forensics/          # Module A: deterministic git analysis

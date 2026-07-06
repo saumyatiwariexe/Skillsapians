@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import type { RepoMetadata, CommitSummary, RepoFile } from "@/types";
+import type { RepoMetadata, CommitSummary, RepoFile, RepoLanguageStat } from "@/types";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // GitHub client — server-side only
@@ -58,6 +58,23 @@ export async function getRepoMetadata(
     createdAt: data.created_at ?? new Date().toISOString(),
     language: data.language ?? null,
   };
+}
+
+export async function getRepoLanguages(
+  owner: string,
+  repo: string
+): Promise<RepoLanguageStat[]> {
+  const octokit = getOctokit();
+  const { data } = await octokit.repos.listLanguages({ owner, repo });
+  const totalBytes = Object.values(data).reduce((sum, bytes) => sum + bytes, 0);
+
+  return Object.entries(data)
+    .map(([name, bytes]) => ({
+      name,
+      bytes,
+      percent: totalBytes > 0 ? Math.round((bytes / totalBytes) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => b.bytes - a.bytes);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

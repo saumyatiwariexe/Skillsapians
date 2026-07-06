@@ -17,6 +17,12 @@ export interface RepoMetadata {
   language: string | null;
 }
 
+export interface RepoLanguageStat {
+  name: string;
+  bytes: number;
+  percent: number;
+}
+
 export interface CommitSummary {
   sha: string;
   message: string;
@@ -86,6 +92,7 @@ export interface GeneratedQuestion {
     callers: string[];
     callees: string[];
     function_name: string;
+    skill_focus?: string;
   };
 }
 
@@ -99,6 +106,10 @@ export interface AnswerScoreResult {
   semantic_similarity: number;   // 0–1, cosine sim
   entity_overlap: number;        // 0–1
   specificity_score: number;     // 0–1
+  time_score: number;             // 0-1
+  time_taken_seconds?: number;
+  tab_out_count?: number;
+  integrity_penalty: number;      // point deduction
   final_question_score: number;  // 0–100
   ai_generated_flag: boolean;
 }
@@ -107,15 +118,25 @@ export interface AnswerScoreResult {
 // Aggregation — Verified Skill Report
 // -----------------------------------------------------------
 
-export type SkillArea = "frontend" | "backend" | "fullstack" | "data";
+export type SkillArea = string;
+
+export interface ReportBadge {
+  key: string;
+  label: string;
+  description: string;
+  tone: "green" | "blue" | "purple" | "yellow" | "red";
+}
 
 export interface VerifiedSkillReport {
   report_id: string;
+  user_id?: string | null;
   repo: string;
   skill_area: SkillArea;
   verified_skill_score: number;     // 0–100, weighted A+C
   authenticity_score: number;       // Module A
   average_question_score: number;   // Module C average
+  point_score: number;
+  badge: ReportBadge | null;
   flagged_for_review: boolean;      // true if authenticity_score < 30
   flags: ForensicFlag[];
   questions: Array<GeneratedQuestion & { score?: AnswerScoreResult }>;
@@ -142,11 +163,20 @@ export interface AnalyzeResponse {
   error?: string;
 }
 
+// GET /api/repo-metadata
+export interface RepoMetadataResponse {
+  metadata: (RepoMetadata & { languages: RepoLanguageStat[] }) | null;
+  status: "ready" | "error";
+  error?: string;
+}
+
 // POST /api/answer
 export interface AnswerRequest {
   report_id: string;
   question_id: string;
   answer_text: string;
+  time_taken_seconds?: number;
+  tab_out_count?: number;
 }
 
 export interface AnswerResponse {
@@ -162,4 +192,44 @@ export interface ReportResponse {
   status: "complete" | "in_progress" | "not_found" | "error";
   answered_count: number;
   total_questions: number;
+}
+
+// Auth/Profile
+export interface Profile {
+  user_id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  company: string | null;
+  website: string | null;
+  bio: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProfileReportSummary {
+  report_id: string;
+  repo: string;
+  skill_area: string;
+  verified_skill_score: number;
+  authenticity_score: number;
+  average_question_score: number;
+  point_score: number;
+  badge: ReportBadge | null;
+  created_at: string;
+  completed_at: string | null;
+  question_count: number;
+}
+
+export interface ProfileResponse {
+  profile: Profile | null;
+  reports: ProfileReportSummary[];
+  totals: {
+    report_count: number;
+    average_score: number;
+    total_points: number;
+    badge_count: number;
+  };
+  status: "ready" | "unauthorized" | "error";
+  error?: string;
 }

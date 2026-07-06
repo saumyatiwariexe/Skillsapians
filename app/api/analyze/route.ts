@@ -14,9 +14,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseRepoUrl, getRepoMetadata, getCommitHistory, getFileTree, getFileContent } from "@/lib/github/client";
 import { runGitForensics } from "@/lib/forensics/engine";
-import { generateQuestions, selectTopFiles } from "@/lib/ast/parser";
+import { generateQuestions } from "@/lib/ast/parser";
 import { createAdminClient } from "@/lib/supabase/client";
-import type { AnalyzeRequest, AnalyzeResponse, SkillArea } from "@/types";
+import type { AnalyzeRequest, AnalyzeResponse } from "@/types";
 
 const MAX_FILE_SIZE_BYTES = 100_000; // skip files >100KB (likely generated/minified)
 
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
   try {
     const body = (await req.json()) as AnalyzeRequest;
     const { repo_url, skill_area } = body;
+    const skillFocus = skill_area?.trim() || "overall";
 
     // ── Validate input ──────────────────────────────────────────────────────
     if (!repo_url) {
@@ -34,17 +35,22 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
     }
 
     const { owner, repo } = parseRepoUrl(repo_url);
+    console.log(`[/api/analyze] Starting analysis for ${owner}/${repo}`);
 
     // ── Step 1: Repo metadata ───────────────────────────────────────────────
+    console.log("[/api/analyze] Step 1: Fetching metadata...");
     const metadata = await getRepoMetadata(owner, repo);
 
     // ── Step 2: Commit history ──────────────────────────────────────────────
+    console.log("[/api/analyze] Step 2: Fetching commit history...");
     const commits = await getCommitHistory(owner, repo);
 
     // ── Step 3: Module A — Git Forensics ───────────────────────────────────
+    console.log("[/api/analyze] Step 3: Running forensics...");
     const forensics = await runGitForensics(owner, repo, commits, metadata.isFork);
 
     // ── Step 4: Fetch code files for Module B ───────────────────────────────
+    console.log("[/api/analyze] Step 4: Fetching code files...");
     const fileTree = await getFileTree(owner, repo, metadata.defaultBranch);
 
     // Sort by size, take top 20 candidates (selectTopFiles will narrow to 10)
@@ -68,9 +74,11 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
       .map((r) => r.value);
 
     // ── Step 5: Module B — Generate Questions ───────────────────────────────
-    const questions = await generateQuestions(filesWithContent);
+    console.log(`[/api/analyze] Step 5: Generating questions for ${filesWithContent.length} files...`);
+    const questions = await generateQuestions(filesWithContent, skillFocus);
 
     // ── Step 6: Persist to Supabase ─────────────────────────────────────────
+    console.log("[/api/analyze] Step 6: Saving to Supabase...");
     const db = createAdminClient();
 
     const { data: reportRow, error: reportError } = await db
@@ -79,7 +87,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
         repo_url,
         repo_owner: owner,
         repo_name: repo,
-        skill_area: skill_area ?? "fullstack",
+        skill_area: skillFocus,
         authenticity_score: forensics.authenticity_score,
         flags: forensics.flags,
         commit_count: forensics.commit_count,
@@ -92,13 +100,16 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
       .single();
 
     if (reportError || !reportRow) {
+      console.error("[/api/analyze] DB Error:", reportError);
       throw new Error(`DB error saving report: ${reportError?.message}`);
     }
 
     const reportId = reportRow.id as string;
+    console.log(`[/api/analyze] Report saved with ID: ${reportId}`);
 
     // Insert questions
     if (questions.length > 0) {
+      console.log(`[/api/analyze] Inserting ${questions.length} questions...`);
       const questionRows = questions.map((q) => ({
         report_id: reportId,
         question_id: q.question_id,
@@ -109,16 +120,20 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
         interest_score: q.interest_score,
         callers: q.metadata.callers,
         callees: q.metadata.callees,
+        skill_focus: q.metadata.skill_focus ?? skillFocus,
       }));
 
       const { error: qError } = await db.from("questions").insert(questionRows);
       if (qError) {
-        console.error("Error inserting questions:", qError.message);
+        console.error("[/api/analyze] Error inserting questions:", qError.message);
         // Non-fatal — report is still usable
       }
+    } else {
+      console.warn("[/api/analyze] WARNING: No questions were generated!");
     }
 
     // ── Step 7: Return response ─────────────────────────────────────────────
+    console.log("[/api/analyze] Analysis complete!");
     return NextResponse.json({
       report_id: reportId,
       authenticity_score: forensics.authenticity_score,
@@ -128,7 +143,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[/api/analyze] Error:", message);
+    const stack = err instanceof Error ? err.stack : "";
+    console.error("[/api/analyze] FATAL ERROR:", message, stack);
     return NextResponse.json(
       { report_id: "", authenticity_score: 0, flags: [], questions: [], status: "error", error: message },
       { status: 500 }

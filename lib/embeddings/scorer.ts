@@ -14,6 +14,11 @@
 import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 import type { GeneratedQuestion, AnswerScoreResult } from "@/types";
 
+interface AnswerIntegrityInput {
+  timeTakenSeconds?: number;
+  tabOutCount?: number;
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Embedding model
 // ──────────────────────────────────────────────────────────────────────────────
@@ -22,7 +27,7 @@ function getEmbeddingModel() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY not set");
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: "text-embedding-004" });
+  return genAI.getGenerativeModel({ model: "gemini-embedding-2" });
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -111,6 +116,25 @@ export function computeSpecificityScore(answer: string): number {
   return Math.min(1.0, wordCount / 25);
 }
 
+export function computeTimeScore(answer: string, timeTakenSeconds = 0): number {
+  const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
+  const expectedSeconds = Math.max(25, Math.min(140, wordCount * 1.6));
+
+  if (timeTakenSeconds <= 0) return 0.5;
+  if (timeTakenSeconds < expectedSeconds * 0.35) return 0.35;
+  if (timeTakenSeconds < expectedSeconds * 0.7) return 0.65;
+  if (timeTakenSeconds < expectedSeconds) return 0.85;
+  if (timeTakenSeconds <= 420) return 1;
+  if (timeTakenSeconds <= 900) return 0.9;
+  return 0.75;
+}
+
+export function computeIntegrityPenalty(timeScore: number, tabOutCount = 0): number {
+  const tabPenalty = Math.min(35, Math.max(0, tabOutCount) * 12);
+  const speedPenalty = timeScore < 0.5 ? 10 : 0;
+  return tabPenalty + speedPenalty;
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // AI-Generated Answer Detection (PRD §7.6 — stretch signal)
 // Heuristic: AI text tends to have lower sentence-length variance
@@ -136,7 +160,8 @@ export function detectAIGeneratedAnswer(answer: string): boolean {
 
 export async function scoreAnswer(
   question: GeneratedQuestion,
-  answerText: string
+  answerText: string,
+  integrity: AnswerIntegrityInput = {}
 ): Promise<AnswerScoreResult> {
   // Build deterministic ground truth
   const factString = buildFactString(question);
@@ -150,17 +175,29 @@ export async function scoreAnswer(
   const semanticSimilarity = cosineSimilarity(factEmbedding, answerEmbedding);
   const entityOverlap      = computeEntityOverlap(answerText, question);
   const specificityScore   = computeSpecificityScore(answerText);
+  const timeTakenSeconds   = Math.max(0, Math.round(integrity.timeTakenSeconds ?? 0));
+  const tabOutCount        = Math.max(0, Math.round(integrity.tabOutCount ?? 0));
+  const timeScore          = computeTimeScore(answerText, timeTakenSeconds);
+  const integrityPenalty   = computeIntegrityPenalty(timeScore, tabOutCount);
   const aiGeneratedFlag    = detectAIGeneratedAnswer(answerText);
 
-  // Final question score (PRD §7.5)
-  const finalQuestionScore =
-    (0.5 * semanticSimilarity + 0.3 * entityOverlap + 0.2 * specificityScore) * 100;
+  const rawQuestionScore =
+    (0.45 * semanticSimilarity +
+      0.25 * entityOverlap +
+      0.15 * specificityScore +
+      0.15 * timeScore) *
+    100;
+  const finalQuestionScore = Math.max(0, Math.min(100, rawQuestionScore - integrityPenalty));
 
   return {
     question_id:         question.question_id,
     semantic_similarity: parseFloat(semanticSimilarity.toFixed(4)),
     entity_overlap:      parseFloat(entityOverlap.toFixed(4)),
     specificity_score:   parseFloat(specificityScore.toFixed(4)),
+    time_score:          parseFloat(timeScore.toFixed(4)),
+    time_taken_seconds:  timeTakenSeconds,
+    tab_out_count:       tabOutCount,
+    integrity_penalty:   parseFloat(integrityPenalty.toFixed(2)),
     final_question_score: parseFloat(finalQuestionScore.toFixed(2)),
     ai_generated_flag:   aiGeneratedFlag,
   };

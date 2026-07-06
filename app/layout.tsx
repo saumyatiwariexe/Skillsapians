@@ -3,6 +3,8 @@ import { Plus_Jakarta_Sans, Poppins, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { UserCircle } from "lucide-react";
+import { AuthProvider } from "@/components/AuthProvider";
+import { UserMenu } from "@/components/UserMenu";
 
 const displayFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -43,36 +45,36 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}>
-      <body className="antialiased font-body bg-canvas text-text-primary min-h-screen flex flex-col">
-        {/* Navigation */}
-        <header className="border-b border-subtle bg-surface px-6 h-16 flex items-center justify-between shrink-0 sticky top-0 z-50">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="font-display font-bold text-xl tracking-tight text-text-primary">
-              Skillsapians
-            </Link>
+    <html lang="en" className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`} suppressHydrationWarning>
+      <body className="antialiased font-body bg-canvas text-text-primary min-h-screen flex flex-col" suppressHydrationWarning>
+        <AuthProvider>
+          {/* Navigation */}
+          <header className="border-b border-subtle bg-surface px-6 h-16 flex items-center justify-between shrink-0 sticky top-0 z-50">
+            <div className="flex items-center gap-8">
+              <Link href="/" className="font-display font-bold text-xl tracking-tight text-text-primary">
+                Skillsapians
+              </Link>
+              
+              <nav className="flex items-center gap-6">
+                <Link href="/reports" className="text-text-secondary hover:text-text-primary transition-colors text-sm font-medium">
+                  My Reports
+                </Link>
+                <Link href="/" className="text-text-primary border-b-2 border-accent-purple translate-y-[1px] pb-[17px] mt-[17px] text-sm font-medium">
+                  New Verification
+                </Link>
+              </nav>
+            </div>
             
-            <nav className="flex items-center gap-6">
-              <Link href="/reports" className="text-text-secondary hover:text-text-primary transition-colors text-sm font-medium">
-                My Reports
-              </Link>
-              <Link href="/" className="text-text-primary border-b-2 border-accent-purple translate-y-[1px] pb-[17px] mt-[17px] text-sm font-medium">
-                New Verification
-              </Link>
-            </nav>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button aria-label="User menu" className="text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-full">
-              <UserCircle size={24} strokeWidth={1.5} />
-            </button>
-          </div>
-        </header>
+            <div className="flex items-center gap-4">
+              <UserMenu />
+            </div>
+          </header>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center p-6 md:p-12">
-          {children}
-        </div>
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col items-center p-6 md:p-12">
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

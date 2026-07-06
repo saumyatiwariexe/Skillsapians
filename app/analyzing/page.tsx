@@ -1,27 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { AnalyzeResponse } from "@/types";
-import { Loader2, CheckCircle2, Circle } from "lucide-react";
+import type { AnalyzeResponse, RepoMetadataResponse } from "@/types";
+import { Loader2, Check, GitBranch, Code2, Clock, Boxes, Languages } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
-const PROGRESS_STEPS = [
-  { id: "step-commits",   label: "Checking commit history"     },
-  { id: "step-ast",       label: "Reading your code structure"      },
-  { id: "step-questions", label: "Preparing questions"   },
-];
+interface RepoStat {
+  id: string;
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+}
 
-const STEP_DELAY_MS = 2500;
-
-export default function AnalyzingPage() {
+function AnalyzingPage() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const repoUrl  = searchParams.get("repo")  ?? "";
-  const skillArea = searchParams.get("skill") ?? "fullstack";
+  const skillArea = searchParams.get("skill") ?? "Overall";
 
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError]             = useState<string | null>(null);
+  const [stats, setStats]             = useState<RepoStat[]>([]);
+  const [revealedCount, setRevealedCount] = useState(0);
 
   useEffect(() => {
     if (!repoUrl) {
@@ -35,6 +36,26 @@ export default function AnalyzingPage() {
         return prev;
       });
     }, STEP_DELAY_MS);
+
+    // ── Parallel: instant repo metadata (vertical reveal) + background analysis
+    fetch(`/api/repo-metadata?repo=${encodeURIComponent(repoUrl)}`)
+      .then((r) => r.json() as Promise<RepoMetadataResponse>)
+      .then((data) => {
+        if (data.status === "ready" && data.metadata) {
+          const m = data.metadata;
+          const topLangs = m.languages.slice(0, 3).map((l) => l.name).join(", ");
+          const built: RepoStat[] = [
+            { id: "owner",   label: "Owner",      value: m.owner,                       icon: <GitBranch className="w-4 h-4" /> },
+            { id: "repo",    label: "Repository", value: m.repo,                        icon: <Boxes className="w-4 h-4" /> },
+            { id: "lang",    label: "Top languages", value: topLangs || m.language || "—", icon: <Languages className="w-4 h-4" /> },
+            { id: "size",    label: "Size",       value: `${m.size.toLocaleString()} KB`, icon: <Code2 className="w-4 h-4" /> },
+            { id: "fork",    label: "Fork",       value: m.isFork ? "Yes" : "No",        icon: <Code2 className="w-4 h-4" /> },
+            { id: "created", label: "Created",    value: new Date(m.createdAt).toLocaleDateString(), icon: <Clock className="w-4 h-4" /> },
+          ];
+          setStats(built);
+        }
+      })
+      .catch(() => { /* non-fatal — analysis continues */ });
 
     async function runAnalysis() {
       try {
@@ -62,6 +83,14 @@ export default function AnalyzingPage() {
     return () => clearInterval(stepInterval);
   }, [repoUrl, skillArea, router]);
 
+  // Reveal stats one-by-one for the vertical downward line effect
+  useEffect(() => {
+    if (stats.length === 0) return;
+    if (revealedCount >= stats.length) return;
+    const t = setTimeout(() => setRevealedCount((c) => c + 1), 350);
+    return () => clearTimeout(t);
+  }, [stats, revealedCount]);
+
   if (error) {
     return (
       <main className="w-full max-w-[480px] mx-auto pt-[10vh]">
@@ -87,7 +116,26 @@ export default function AnalyzingPage() {
           <p className="font-body text-xs text-text-tertiary truncate">{repoUrl}</p>
         </div>
 
-        <ul className="flex flex-col gap-6 mb-8">
+        {/* Vertical downward line: repo stats appear step-by-step */}
+        {stats.length > 0 && (
+          <div className="relative pl-6 mb-8">
+            <span className="absolute left-[7px] top-2 bottom-2 w-px bg-subtle" />
+            {stats.slice(0, revealedCount).map((s, i) => (
+              <div
+                key={s.id}
+                className="relative flex items-center gap-3 mb-3 animate-[fadeIn_0.3s_ease-out]"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <span className="absolute -left-[23px] w-3.5 h-3.5 rounded-full bg-accent-purple border-2 border-surface" />
+                <span className="text-accent-purple">{s.icon}</span>
+                <span className="font-body text-xs text-text-tertiary w-28 shrink-0">{s.label}</span>
+                <span className="font-body text-sm text-text-primary truncate">{s.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <ul className="flex flex-col gap-6">
           {PROGRESS_STEPS.map((step, i) => {
             const isDone = i < currentStep;
             const isActive = i === currentStep;
@@ -96,9 +144,9 @@ export default function AnalyzingPage() {
             return (
               <li key={step.id} className="flex items-center gap-4">
                 <div className="shrink-0 flex items-center justify-center w-6 h-6">
-                  {isDone && <CheckCircle2 className="text-accent-green w-5 h-5" />}
+                  {isDone && <Check className="text-accent-green w-5 h-5" />}
                   {isActive && <Loader2 className="text-accent-purple w-5 h-5 animate-spin" />}
-                  {isPending && <Circle className="text-border-subtle w-5 h-5" />}
+                  {isPending && <span className="w-2 h-2 rounded-full bg-border-subtle" />}
                 </div>
                 <span className={`font-body text-sm transition-colors duration-300 ${isDone ? "text-text-primary" : isActive ? "text-text-primary font-medium" : "text-text-tertiary"}`}>
                   {step.label}
@@ -107,8 +155,22 @@ export default function AnalyzingPage() {
             );
           })}
         </ul>
-
       </section>
     </main>
+  );
+}
+
+const PROGRESS_STEPS = [
+  { id: "step-ast",       label: "Reading your code structure"      },
+  { id: "step-questions", label: "Preparing your verification questions" },
+];
+
+const STEP_DELAY_MS = 3000;
+
+export default function AnalyzingPageDefault() {
+  return (
+    <Suspense fallback={null}>
+      <AnalyzingPage />
+    </Suspense>
   );
 }

@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/client";
-import type { ReportResponse, VerifiedSkillReport, SkillArea } from "@/types";
+import type { ReportResponse, VerifiedSkillReport } from "@/types";
 
 export async function GET(
   _req: NextRequest,
@@ -52,11 +52,14 @@ export async function GET(
   // Build the report shape
   const report: VerifiedSkillReport = {
     report_id:              reportRow.id,
+    user_id:                reportRow.user_id ?? null,
     repo:                   reportRow.repo_url,
-    skill_area:             (reportRow.skill_area ?? "fullstack") as SkillArea,
+    skill_area:             reportRow.skill_area ?? "overall",
     verified_skill_score:   reportRow.verified_skill_score ?? 0,
     authenticity_score:     reportRow.authenticity_score ?? 0,
     average_question_score: 0,
+    point_score:            reportRow.point_score ?? 0,
+    badge:                  reportRow.badge ?? null,
     flagged_for_review:     reportRow.flagged_for_review ?? false,
     flags:                  reportRow.flags ?? [],
     questions: questions.map((q) => ({
@@ -69,6 +72,7 @@ export async function GET(
         callers: q.callers ?? [],
         callees: q.callees ?? [],
         function_name: q.function_name ?? "",
+        skill_focus: q.skill_focus ?? reportRow.skill_area ?? "overall",
       },
       score: q.answered_at
         ? {
@@ -77,6 +81,10 @@ export async function GET(
             semantic_similarity:  q.semantic_similarity ?? 0,
             entity_overlap:       q.entity_overlap ?? 0,
             specificity_score:    q.specificity_score ?? 0,
+            time_score:           q.time_score ?? 0,
+            time_taken_seconds:   q.time_taken_seconds ?? 0,
+            tab_out_count:        q.tab_out_count ?? 0,
+            integrity_penalty:    q.integrity_penalty ?? 0,
             final_question_score: q.final_question_score ?? 0,
             ai_generated_flag:    q.ai_generated_flag ?? false,
           }

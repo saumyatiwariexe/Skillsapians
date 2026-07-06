@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type User } from "@supabase/supabase-js";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Public Supabase client (browser-safe, uses ANON key)
@@ -14,6 +14,30 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export function createUserClient(authorizationHeader: string | null) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: authorizationHeader
+      ? { headers: { Authorization: authorizationHeader } }
+      : undefined,
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+export async function getUserFromAuthorization(
+  authorizationHeader: string | null
+): Promise<User | null> {
+  if (!authorizationHeader?.startsWith("Bearer ")) return null;
+
+  const client = createUserClient(authorizationHeader);
+  const { data, error } = await client.auth.getUser();
+
+  if (error || !data.user) return null;
+  return data.user;
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Admin Supabase client (server-side only — bypasses Row Level Security)

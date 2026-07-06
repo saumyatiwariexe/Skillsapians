@@ -9,13 +9,15 @@
 
 **Primary screen / hero of the product:** the **Verification Report** (§7). Everything else exists to get the user there or let them revisit past reports. Build and polish this screen first.
 
-**Core user flow (linear, 4 steps):**
+**Core user flow (linear, 5 steps):**
 ```
-Submit Repo → Analyzing → Answer Questions → Verification Report
+Submit Repo → Analyzing → Start Verification (proctored) → Answer Questions → Verification Report
 ```
-A secondary flow lets a returning user browse their own history:
+A signed-in user can then save the report to their Profile.
+A secondary flow lets a returning user browse their own history or aggregate:
 ```
-My Reports (list) → Verification Report (same screen as above, reopened)
+Profile (Report Card) → Verification Report (same screen as above, reopened)
+My Reports (list)     → Verification Report (same screen as above, reopened)
 ```
 
 ---
@@ -141,7 +143,7 @@ Simple top navigation — **no admin-style sidebar**, since this is an individua
 1. Short headline (Google Sans, 24px): "Verify a skill from real work you've built."
 2. One-line subtext (Poppins, 14px, `--text-secondary`): "Paste a public GitHub repo. We'll check what you actually built — not what you can memorize."
 3. Input field: full-width, `--bg-surface` fill, 1px `--border-subtle`, 12px radius, placeholder "github.com/username/repo".
-4. Dropdown (optional, secondary): "Skill area to verify" — Frontend / Backend / Full-Stack / Data — defaults to "Auto-detect."
+4. Skill area (free-text, secondary): a text input, "Skill area to verify," placeholder "e.g. AI, ML, React, Overall," with quick-suggestion chips (AI / ML / React / Backend / Overall). The value directs the question generator to focus questions on that domain/language.
 5. Primary button, full-width: "Analyze Repo" (`--accent-purple` fill, white text).
 6. Small helper link beneath, `--text-tertiary`, 12px: "What do we check?" — opens a lightweight tooltip/modal explaining the three checks in plain language (see §11 copy).
 
@@ -157,21 +159,25 @@ Simple top navigation — **no admin-style sidebar**, since this is an individua
 
 **Contents:**
 - Static headline: "Analyzing your repo…"
-- A vertical checklist of 3 steps, each with a status indicator (pending/spinner/check):
-  1. Checking commit history
-  2. Reading your code structure
-  3. Preparing questions
+- **Repo stats reveal (new in v1.1):** a `GET /api/repo-metadata` call fires immediately (languages, owner, size) and is rendered as a **vertical downward line** — a left-aligned spine with a dot per stat, each stat row fading in one-by-one (≈350ms stagger) as the metadata arrives. This gives the user instant, honest feedback while the heavier `/api/analyze` run continues in the background. Stats shown: Owner, Repository, Top languages, Size, Fork, Created.
+- A vertical checklist of 2 remaining steps, each with a status indicator (pending/spinner/check):
+  1. Reading your code structure
+  2. Preparing questions
 - Each step's icon: neutral outline circle (pending) → small spinner (active) → filled check in `--accent-green` (done). No progress percentage number needed — the checklist itself communicates progress.
 - No skeleton screens here; this is a short, sequential wait (real API/processing time), so a step list reads as more honest than a fake progress bar.
 
 ---
 
-## 8. Screen 3 — Question Flow
+## 8. Screen 3 — Question Flow (Proctored)
+
+**Entry gate (new in v1.1):** before the first question, show a "Ready to verify?" card with a **Start Verification** button that requests the browser **Fullscreen API**. Copy explains the session is proctored and that leaving the tab/window is tracked as a warning. This sets expectations honestly rather than springing monitoring on the user.
 
 **Layout:** centered, max-width 720px, one question fully visible at a time.
 
+**Integrity status bar (persistent, above the question):** a small row showing a pulsing "Proctored" dot, a live per-question timer (`⏱ 12s`), and a tab-out counter (`⚠ Tab-outs: 1`). If the user switches away (browser `visibilitychange`), increment the counter and show a **harsh full-screen warning modal** ("Integrity Warning — you left the verification window. This is recorded and may reduce your integrity score."). The modal is dismissible only by an explicit "I understand — return to verification" action. Colors: counter turns `--accent-orange` once > 0.
+
 **Contents top to bottom:**
-1. Progress indicator: "Question 3 of 6" (Poppins 12px `--text-tertiary`) + a thin horizontal progress bar (4px height, `--accent-purple` fill on `--border-subtle` track).
+1. Progress indicator: "Question 3 of 10" (Poppins 12px `--text-tertiary`) + a thin horizontal progress bar (4px height, `--accent-purple` fill on `--border-subtle` track).
 2. Code snippet block: `--bg-surface` background, `--font-mono`, 13px, syntax-neutral (don't attempt full syntax highlighting for the hackathon build unless time allows — a single monospace block with `--text-primary` is acceptable and keeps scope small).
 3. Question text: Poppins 16px/500, `--text-primary`, directly beneath the code block — phrased as a real question, e.g., "Why does this function check `validateCart()` before calling `chargeCard()`?"
 4. Answer textarea: full-width, `--bg-surface` fill, min-height ~120px, placeholder: "Explain your reasoning — the more specific, the better."
@@ -189,6 +195,7 @@ Simple top navigation — **no admin-style sidebar**, since this is an individua
 - Submitted date, Poppins 12px `--text-tertiary`.
 - **Hero score:** large number (Google Sans Bold, 56px) — the Verified Skill Score, e.g., "84".
 - Status chip beside the hero score: "Verified" (green) / "Flagged for Review" (red) / "In Review" (blue) — chip style per §10.3.
+- **Badge + points (new in v1.1):** if a badge was assigned, render a pill beside the score showing the badge label (e.g. "AI Expert", "Fast Implementer") with a small award glyph and the `point_score` (e.g. "1,240 pts"). Treat the badge as a credibility signal, not a game reward — see the v1.1 note in §16.
 - One-line plain-language summary beneath the score, Poppins 14px `--text-secondary`: e.g., "Strong understanding of backend logic. No authenticity concerns found."
 
 ### 9.2 Score breakdown row

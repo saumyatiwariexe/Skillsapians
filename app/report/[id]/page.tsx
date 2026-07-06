@@ -6,7 +6,10 @@ import type { ReportResponse, VerifiedSkillReport, ForensicFlag } from "@/types"
 import { StatusChip, type StatusVariant } from "@/components/ui/StatusChip";
 import { StatCard } from "@/components/ui/StatCard";
 import { Button } from "@/components/ui/Button";
-import { Check, ChevronDown, ChevronUp, ExternalLink, ShieldCheck, FileSearch, Code2, AlertTriangle } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, ExternalLink, ShieldCheck, FileSearch, Code2, AlertTriangle, Award, Star, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
+import { signInWithProvider } from "@/lib/supabase/auth";
+import { GitHubIcon } from "@/components/GitHubIcon";
 
 function getStatusBadgeParams(report: VerifiedSkillReport): { variant: StatusVariant; label: string } {
   if (report.flagged_for_review) return { variant: "flagged", label: "Flagged for Review" };
@@ -31,6 +34,10 @@ export default function ReportPage() {
   const [error,    setError]    = useState<string | null>(null);
   const [copied,   setCopied]   = useState(false);
   const [expandedQ, setExpandedQ] = useState<string | null>(null);
+  const [saved,    setSaved]    = useState(false);
+  const [saving,   setSaving]   = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!id) return;
@@ -56,6 +63,27 @@ export default function ReportPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
+  }
+
+  async function handleSaveToProfile() {
+    if (!user || !report) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const { data } = await (await import("@/lib/supabase/auth")).supabase.auth.getSession();
+      const token = data.session?.access_token;
+      const res = await fetch(`/api/report/${id}/claim`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const dataJson = await res.json();
+      if (!res.ok || dataJson.status === "error") throw new Error(dataJson.error ?? "Could not save report.");
+      setSaved(true);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Could not save report.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) return <main className="w-full h-[50vh] flex items-center justify-center text-text-tertiary">Loading report…</main>;
@@ -90,8 +118,60 @@ export default function ReportPage() {
           <p className="font-body text-sm text-text-secondary mt-2">
             Skill Area: <strong className="text-text-primary ml-1 capitalize">{report.skill_area}</strong>
           </p>
+
+          {report.badge && (
+            <div className="mt-5 flex items-center gap-3 bg-surface border border-subtle rounded-full pl-2 pr-5 py-1">
+              <span className="w-9 h-9 rounded-full bg-accent-purple/15 text-accent-purple flex items-center justify-center">
+                <Award className="w-5 h-5" />
+              </span>
+              <div className="text-left">
+                <p className="font-body text-sm font-medium text-text-primary leading-tight">{report.badge.label}</p>
+                <p className="font-body text-[11px] text-text-tertiary leading-tight">{report.point_score} pts</p>
+              </div>
+            </div>
+          )}
         </div>
       </header>
+
+      {/* Save to profile CTA */}
+      {report.badge && (
+        <section className="max-w-[520px] mx-auto mb-10">
+          {user ? (
+            saved ? (
+              <div className="flex items-center justify-center gap-2 bg-accent-green/10 border border-accent-green/30 rounded-md py-3 font-body text-sm text-accent-green">
+                <Check className="w-4 h-4" /> Saved to your Report Card
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Button onClick={handleSaveToProfile} disabled={saving} className="w-full">
+                  {saving ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Saving…</span> : "Save to my Report Card"}
+                </Button>
+                {saveError && <p className="font-body text-xs text-accent-red">{saveError}</p>}
+              </div>
+            )
+          ) : (
+            <div className="bg-surface border border-subtle rounded-md p-5 text-center">
+              <p className="font-body text-sm text-text-secondary mb-3">
+                Sign in to save this report to a shareable Report Card.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => signInWithProvider("github")}
+                  className="w-full flex items-center justify-center gap-2 bg-canvas border border-subtle rounded-md px-4 py-2.5 font-body text-sm text-text-primary hover:bg-surface-alt transition-colors"
+                >
+                  <GitHubIcon size={16} /> Save with GitHub
+                </button>
+                <button
+                  onClick={() => signInWithProvider("google")}
+                  className="w-full flex items-center justify-center gap-2 bg-canvas border border-subtle rounded-md px-4 py-2.5 font-body text-sm text-text-primary hover:bg-surface-alt transition-colors"
+                >
+                  <Star size={16} /> Save with Google
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Flagged Banner */}
       {report.flagged_for_review && (
