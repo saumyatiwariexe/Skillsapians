@@ -1,22 +1,26 @@
 import HeroSection from "@/components/landing/HeroSection";
-import TrustBar from "@/components/landing/TrustBar";
-import ProductivitySection from "@/components/landing/ProductivitySection";
-import StatsSection from "@/components/landing/StatsSection";
-import CollaborationSection from "@/components/landing/CollaborationSection";
-import SecuritySection from "@/components/landing/SecuritySection";
-import CTASection from "@/components/landing/CTASection";
+import ProblemSection from "@/components/landing/ProblemSection";
+import ExistingSolutionsSection from "@/components/landing/ExistingSolutionsSection";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
+import ExampleReportSection from "@/components/landing/ExampleReportSection";
+import WhoIsThisForSection from "@/components/landing/WhoIsThisForSection";
+import WhyThisMattersSection from "@/components/landing/WhyThisMattersSection";
+import TechnicalCredibilitySection from "@/components/landing/TechnicalCredibilitySection";
+import FAQSection from "@/components/landing/FAQSection";
 import Footer from "@/components/landing/Footer";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen w-full" style={{ backgroundColor: "#121212" }}>
       <HeroSection />
-      <TrustBar />
-      <ProductivitySection />
-      <StatsSection />
-      <CollaborationSection />
-      <SecuritySection />
-      <CTASection />
+      <ProblemSection />
+      <ExistingSolutionsSection />
+      <HowItWorksSection />
+      <ExampleReportSection />
+      <WhoIsThisForSection />
+      <WhyThisMattersSection />
+      <TechnicalCredibilitySection />
+      <FAQSection />
       <Footer />
     </div>
   );

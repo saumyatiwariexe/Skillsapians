@@ -1,24 +1,5 @@
 "use client";
 
-const footerColumns = [
-  {
-    title: "Product",
-    links: ["Features", "Security", "Team", "Enterprise", "Customer Stories", "Pricing", "What's New"],
-  },
-  {
-    title: "Platform",
-    links: ["Developer API", "Partners", "GitHub Desktop", "GitHub Mobile"],
-  },
-  {
-    title: "Support",
-    links: ["Docs", "Community Forum", "Professional Services", "Status", "Contact Us"],
-  },
-  {
-    title: "Company",
-    links: ["About", "Blog", "Careers", "Press", "Inclusion"],
-  },
-];
-
 function GitHubIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -47,55 +28,36 @@ export default function Footer() {
   return (
     <footer
       className="border-t border-border-subtle"
-      style={{ backgroundColor: "#1B1B1E", padding: "64px 0 48px" }}
+      style={{ backgroundColor: "#121212", padding: "64px 0 48px" }}
     >
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
-          <div className="col-span-2">
-            <span className="font-display font-semibold text-lg text-txt-primary">
-              Skillsapiens
-            </span>
-            <p className="font-body text-sm text-txt-tertiary mt-3 max-w-[240px] leading-relaxed">
-              Verified skill certification from real, existing work — not another test.
-            </p>
-          </div>
-
-          {footerColumns.map((col) => (
-            <div key={col.title}>
-              <h4 className="font-body font-semibold text-sm text-txt-primary mb-4">
-                {col.title}
-              </h4>
-              <ul className="space-y-2.5">
-                {col.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="font-body text-sm text-txt-secondary hover:text-txt-primary transition-colors duration-150"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="flex flex-col items-center text-center gap-6 mb-12">
+          <span className="font-display font-bold text-2xl text-text-primary">
+            Skillsapians
+          </span>
+          <p className="font-body text-text-secondary max-w-md" style={{ fontSize: "16px", lineHeight: 1.6 }}>
+            Making skills-based hiring trustworthy.
+          </p>
+          <span className="font-mono text-xs text-text-tertiary px-4 py-2 rounded-full border border-subtle bg-surface">
+            Built for NYC CodeQuest 2026 — EDU-01
+          </span>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between mt-12 pt-6 border-t border-border-subtle gap-4">
-          <span className="font-body text-[13px] text-txt-tertiary">
-            &copy; 2026 Skillsapiens, Inc.
+        <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-border-subtle gap-4">
+          <span className="font-body text-sm text-text-tertiary">
+            &copy; 2026 Skillsapians
           </span>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             {["Terms", "Privacy", "Sitemap"].map((item, i) => (
-              <span key={item} className="flex items-center gap-4">
+              <span key={item} className="flex items-center gap-6">
                 <a
                   href="#"
-                  className="font-body text-[13px] text-txt-tertiary hover:text-txt-primary transition-colors duration-150"
+                  className="font-body text-sm text-text-tertiary hover:text-text-primary transition-colors duration-150"
                 >
                   {item}
                 </a>
-                {i < 2 && <span className="text-txt-tertiary">&middot;</span>}
+                {i < 2 && <span className="text-text-tertiary">&middot;</span>}
               </span>
             ))}
           </div>
@@ -103,21 +65,21 @@ export default function Footer() {
           <div className="flex items-center gap-4">
             <a
               href="#"
-              className="text-txt-tertiary hover:text-txt-primary transition-colors duration-150"
+              className="text-text-tertiary hover:text-text-primary transition-colors duration-150"
               aria-label="GitHub"
             >
               <GitHubIcon size={20} />
             </a>
             <a
               href="#"
-              className="text-txt-tertiary hover:text-txt-primary transition-colors duration-150"
+              className="text-text-tertiary hover:text-text-primary transition-colors duration-150"
               aria-label="Twitter / X"
             >
               <TwitterIcon size={20} />
             </a>
             <a
               href="#"
-              className="text-txt-tertiary hover:text-txt-primary transition-colors duration-150"
+              className="text-text-tertiary hover:text-text-primary transition-colors duration-150"
               aria-label="LinkedIn"
             >
               <LinkedInIcon size={20} />
