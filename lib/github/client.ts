@@ -17,6 +17,24 @@ function getOctokit(): Octokit {
   return new Octokit({ auth: token });
 }
 
+const REQUEST_TIMEOUT_MS = 8000;
+
+async function withTimeout<T>(promise: Promise<T>): Promise<T> {
+  let rejectTimeout: (err: Error) => void;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    rejectTimeout = reject;
+  });
+  const timeoutId = setTimeout(() => {
+    rejectTimeout(new Error(`GitHub API connect timeout after ${REQUEST_TIMEOUT_MS}ms`));
+  }, REQUEST_TIMEOUT_MS);
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // URL Parser
 // ──────────────────────────────────────────────────────────────────────────────
@@ -46,7 +64,7 @@ export async function getRepoMetadata(
   repo: string
 ): Promise<RepoMetadata> {
   const octokit = getOctokit();
-  const { data } = await octokit.repos.get({ owner, repo });
+  const { data } = await withTimeout(octokit.repos.get({ owner, repo }));
 
   return {
     owner,
@@ -65,7 +83,7 @@ export async function getRepoLanguages(
   repo: string
 ): Promise<RepoLanguageStat[]> {
   const octokit = getOctokit();
-  const { data } = await octokit.repos.listLanguages({ owner, repo });
+  const { data } = await withTimeout(octokit.repos.listLanguages({ owner, repo }));
   const totalBytes = Object.values(data).reduce((sum, bytes) => sum + bytes, 0);
 
   return Object.entries(data)
@@ -92,12 +110,14 @@ export async function getCommitHistory(
   let page = 1;
 
   while (commits.length < maxCommits) {
-    const { data } = await octokit.repos.listCommits({
+    const { data } = await withTimeout(
+      octokit.repos.listCommits({
       owner,
       repo,
       per_page: 100,
-      page,
-    });
+        page,
+      })
+    );
 
     if (data.length === 0) break;
 
@@ -132,7 +152,7 @@ export async function getCommitStats(
   sha: string
 ): Promise<{ additions: number; deletions: number; filesChanged: number }> {
   const octokit = getOctokit();
-  const { data } = await octokit.repos.getCommit({ owner, repo, ref: sha });
+  const { data } = await withTimeout(octokit.repos.getCommit({ owner, repo, ref: sha }));
 
   return {
     additions: data.stats?.additions ?? 0,
@@ -174,12 +194,12 @@ export async function getFileTree(
   branch: string
 ): Promise<RepoFile[]> {
   const octokit = getOctokit();
-  const { data } = await octokit.git.getTree({
+  const { data } = await withTimeout(octokit.git.getTree({
     owner,
     repo,
     tree_sha: branch,
     recursive: "1",
-  });
+  }));
 
   return (data.tree as Array<{ path?: string; size?: number; type?: string }>)
     .filter((f) => {
@@ -207,7 +227,7 @@ export async function getFileContent(
   path: string
 ): Promise<string> {
   const octokit = getOctokit();
-  const { data } = await octokit.repos.getContent({ owner, repo, path });
+  const { data } = await withTimeout(octokit.repos.getContent({ owner, repo, path }));
 
   if ("content" in data && data.encoding === "base64") {
     return Buffer.from(data.content, "base64").toString("utf-8");

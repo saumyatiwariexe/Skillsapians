@@ -24,6 +24,15 @@ const config: Config = {
         "accent-orange": "var(--accent-orange)",
         "accent-red": "var(--accent-red)",
         "accent-yellow": "var(--accent-yellow)",
+
+        "txt-primary": "var(--text-primary)",
+        "txt-secondary": "var(--text-secondary)",
+        "txt-tertiary": "var(--text-tertiary)",
+        "border-subtle": "var(--border-subtle)",
+
+        purple: "var(--accent-purple)",
+        blue: "var(--accent-blue)",
+        green: "var(--accent-green)",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
@@ -43,6 +52,7 @@ const config: Config = {
       borderRadius: {
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
+        xl: "16px",
         full: "var(--radius-full)",
       },
       keyframes: {
@@ -50,9 +60,14 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(8px)" },
           to:   { opacity: "1", transform: "translateY(0)" },
         },
+        "pulse-line": {
+          "0%, 100%": { opacity: "0.3" },
+          "50%": { opacity: "0.8" },
+        },
       },
       animation: {
         "fade-in": "fade-in 0.2s ease-out forwards",
+        "pulse-line": "pulse-line 2s ease-in-out infinite",
       },
       maxWidth: {
         content: "840px",

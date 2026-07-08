@@ -51,7 +51,7 @@ export default function ProfilePage() {
 
   async function handleSignOut() {
     await signOut();
-    router.push("/");
+    router.push("/verify");
   }
 
   if (loading) {
@@ -126,7 +126,7 @@ export default function ProfilePage() {
       {reports.length === 0 ? (
         <div className="bg-surface border border-subtle rounded-md p-10 text-center">
           <p className="font-body text-sm text-text-secondary mb-5">No reports yet. Complete a verification to build your Report Card.</p>
-          <Button onClick={() => router.push("/")}>Start a verification</Button>
+          <Button onClick={() => router.push("/verify")}>Start a verification</Button>
         </div>
       ) : (
         <ul className="flex flex-col gap-3">

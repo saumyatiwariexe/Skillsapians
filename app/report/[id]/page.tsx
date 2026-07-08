@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Check, ChevronDown, ChevronUp, ExternalLink, ShieldCheck, FileSearch, Code2, AlertTriangle, Award, Star, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { signInWithProvider } from "@/lib/supabase/auth";
+import { fetchJson } from "@/lib/api";
 import { GitHubIcon } from "@/components/GitHubIcon";
 
 function getStatusBadgeParams(report: VerifiedSkillReport): { variant: StatusVariant; label: string } {
@@ -42,16 +43,14 @@ export default function ReportPage() {
   useEffect(() => {
     if (!id) return;
     async function loadReport() {
-      try {
-        const res  = await fetch(`/api/report/${id}`);
-        const data = (await res.json()) as ReportResponse;
-        if (!res.ok || !data.report) throw new Error("Report not found.");
-        setReport(data.report);
+      const { ok, data, error } = await fetchJson<ReportResponse>(`/api/report/${id}`);
+      if (!ok || !data?.report) {
+        setError(error ?? "Report not found.");
         setLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load report.");
-        setLoading(false);
+        return;
       }
+      setReport(data.report);
+      setLoading(false);
     }
     loadReport();
   }, [id]);
@@ -301,7 +300,7 @@ export default function ReportPage() {
         <Button onClick={handleCopyLink} className="w-full sm:w-auto">
           {copied ? "Copied to clipboard!" : "Copy Share Link"}
         </Button>
-        <Button variant="ghost" onClick={() => router.push("/")} className="w-full sm:w-auto">
+        <Button variant="ghost" onClick={() => router.push("/verify")} className="w-full sm:w-auto">
           Analyze another repo
         </Button>
       </section>

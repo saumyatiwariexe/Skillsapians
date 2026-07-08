@@ -12,7 +12,7 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { v4 as uuidv4 } from "uuid";
 import type { ASTNode, GeneratedQuestion } from "@/types";
 
@@ -310,21 +310,26 @@ ${codeSnippet}
 
 Return ONLY the question text, nothing else. Do not include labels, preamble, or explanation.`;
 
+let cachedPhraseModel: GenerativeModel | null = null;
+
 async function phraseQuestion(node: ASTNode, skillFocus: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY not set");
 
-  const genAI  = new GoogleGenerativeAI(apiKey);
-  const model  = genAI.getGenerativeModel({ 
-    model: "gemini-3.5-flash",
-    safetySettings: [
-      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    ]
-  });
+  if (!cachedPhraseModel) {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    cachedPhraseModel = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      safetySettings: [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+      ]
+    });
+  }
 
+  const model = cachedPhraseModel;
   const prompt = QUESTION_PROMPT_TEMPLATE(
     node.codeSnippet,
     node.callers,
@@ -333,8 +338,31 @@ async function phraseQuestion(node: ASTNode, skillFocus: string): Promise<string
     skillFocus
   );
 
-  const result = await model.generateContent(prompt);
-  return result.response.text().trim();
+  // Retry with backoff for transient 429/503 rate limits.
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return result.response.text().trim();
+    } catch (err) {
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/429|503|Too Many Requests|high demand/i.test(msg) && attempt < 2) {
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Question phrasing failed");
+}
+
+// Deterministic fallback so we always produce a question even if the LLM is down.
+function fallbackQuestion(node: ASTNode, skillFocus: string): string {
+  const callees = node.callees.length ? node.callees.join(", ") : "other functions";
+  return `Explain the reasoning behind the logic in "${node.name}"${
+    skillFocus && skillFocus !== "overall" ? ` as it relates to ${skillFocus}` : ""
+  }. Why does it call ${callees}, and what would break if that order changed?`;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -364,29 +392,31 @@ export async function generateQuestions(
   const questions: GeneratedQuestion[] = [];
   for (let i = 0; i < topNodes.length; i++) {
     const node = topNodes[i];
+    // Small pause to avoid hitting 429 rate limits on free-tier keys
+    if (i > 0) await new Promise(resolve => setTimeout(resolve, 1000));
+
+    let questionText: string;
     try {
-      // Small pause to avoid hitting 429 rate limits on free-tier keys
-      if (i > 0) await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const questionText = await phraseQuestion(node, skillFocus);
+      questionText = await phraseQuestion(node, skillFocus);
       console.log(`[/api/analyze]   Successfully generated question for: ${node.name}`);
-      questions.push({
-        question_id: `q_${String(i + 1).padStart(2, "0")}`,
-        file: node.filePath,
-        code_snippet: node.codeSnippet,
-        question: questionText,
-        interest_score: node.interestScore,
-        metadata: {
-          callers: node.callers,
-          callees: node.callees,
-          function_name: node.name,
-          skill_focus: skillFocus,
-        },
-      });
     } catch (err) {
-      console.error(`[/api/analyze]   Failed to phrase question for ${node.name}:`, err instanceof Error ? err.message : err);
-      continue;
+      questionText = fallbackQuestion(node, skillFocus);
+      console.warn(`[/api/analyze]   Falling back to template question for ${node.name}:`, err instanceof Error ? err.message : err);
     }
+
+    questions.push({
+      question_id: `q_${String(i + 1).padStart(2, "0")}`,
+      file: node.filePath,
+      code_snippet: node.codeSnippet,
+      question: questionText,
+      interest_score: node.interestScore,
+      metadata: {
+        callers: node.callers,
+        callees: node.callees,
+        function_name: node.name,
+        skill_focus: skillFocus,
+      },
+    });
   }
 
   return questions;

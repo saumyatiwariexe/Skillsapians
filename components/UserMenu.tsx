@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserCircle, LogOut, LayoutDashboard, X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -12,6 +12,23 @@ export function UserMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<null | "github" | "google">(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    function onPointerDown(e: PointerEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-user-menu]")) setOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [open]);
 
   async function handleSignIn(provider: "github" | "google") {
     setBusy(provider);
@@ -41,7 +58,7 @@ export function UserMenu() {
     const avatar = (user.user_metadata?.avatar_url as string | undefined) ?? null;
 
     return (
-      <div className="relative">
+      <div className="relative" data-user-menu>
         <button
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-full"
@@ -81,7 +98,7 @@ export function UserMenu() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" data-user-menu>
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Sign in"

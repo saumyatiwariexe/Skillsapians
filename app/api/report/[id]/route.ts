@@ -108,8 +108,6 @@ export async function GET(
   const status =
     reportRow.status === "complete"
       ? "complete"
-      : answeredCount > 0
-      ? "in_progress"
       : "in_progress";
 
   return NextResponse.json({ report, status, answered_count: answeredCount, total_questions: totalQuestions });

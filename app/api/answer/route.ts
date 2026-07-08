@@ -62,10 +62,23 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnswerRespons
       },
     };
 
+    // Fetch all previous answered questions for duplicate detection
+    const { data: prevQuestions } = await db
+      .from("questions")
+      .select("question_id, user_answer")
+      .eq("report_id", report_id)
+      .not("user_answer", "is", null);
+
+    const previousAnswers = (prevQuestions ?? [])
+      .filter((q) => q.question_id !== question_id)
+      .map((q) => (q as Record<string, string>).user_answer ?? "")
+      .filter(Boolean);
+
     // ── Module C — Score the answer ─────────────────────────────────────────
     const scoreResult = await scoreAnswer(question, answer_text, {
       timeTakenSeconds,
       tabOutCount,
+      previousAnswers,
     });
     const factString  = buildFactString(question);
 

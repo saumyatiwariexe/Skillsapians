@@ -75,3 +75,36 @@ pre, code {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Landing page (merged from kmimi frontend) */
+.section-enter {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.section-enter.visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.section-enter.visible .stagger-1 { transition-delay: 100ms; }
+.section-enter.visible .stagger-2 { transition-delay: 200ms; }
+.section-enter.visible .stagger-3 { transition-delay: 300ms; }
+.section-enter.visible .stagger-4 { transition-delay: 400ms; }
+
+.card-hover {
+  transition: background-color 200ms ease-out, border-color 200ms ease-out;
+}
+
+.card-hover:hover {
+  background-color: var(--bg-surface-alt);
+  border-color: rgba(124, 108, 246, 0.3);
+}
+
+.text-gradient-purple-blue {
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

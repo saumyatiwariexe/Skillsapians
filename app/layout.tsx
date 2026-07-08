@@ -59,7 +59,7 @@ export default function RootLayout({
                 <Link href="/reports" className="text-text-secondary hover:text-text-primary transition-colors text-sm font-medium">
                   My Reports
                 </Link>
-                <Link href="/" className="text-text-primary border-b-2 border-accent-purple translate-y-[1px] pb-[17px] mt-[17px] text-sm font-medium">
+                <Link href="/verify" className="text-text-primary border-b-2 border-accent-purple translate-y-[1px] pb-[17px] mt-[17px] text-sm font-medium">
                   New Verification
                 </Link>
               </nav>

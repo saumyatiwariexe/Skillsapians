@@ -74,8 +74,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<AnalyzeRespon
       .map((r) => r.value);
 
     // ── Step 5: Module B — Generate Questions ───────────────────────────────
+    const bypassGemini = process.env.BYPASS_GEMINI === "true";
     console.log(`[/api/analyze] Step 5: Generating questions for ${filesWithContent.length} files...`);
-    const questions = await generateQuestions(filesWithContent, skillFocus);
+    const questions = bypassGemini ? [] : await generateQuestions(filesWithContent, skillFocus);
 
     // ── Step 6: Persist to Supabase ─────────────────────────────────────────
     console.log("[/api/analyze] Step 6: Saving to Supabase...");

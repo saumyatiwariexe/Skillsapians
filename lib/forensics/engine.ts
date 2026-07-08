@@ -70,7 +70,12 @@ export async function runGitForensics(
   // (No deduction yet — used by other signals)
 
   // ── Signal 2: Initial commit size ratio ───────────────────────────────────
-  // Fetch stats for the first commit and sum totals across all
+  // Fetch stats for the first commit. For the hackathon MVP we stay within
+  // API budget by only inspecting the first commit, so we cannot compute an
+  // accurate initial-commit ratio. We therefore leave this signal at 0
+  // (neutral) and defer the penalty to the full implementation.
+  // TODO: batch-fetch all commit stats to compute true initial_commit_ratio.
+
   let initialCommitRatio = 0;
   let firstCommitAdditions = 0;
   let totalAdditions = 0;
@@ -79,21 +84,13 @@ export async function runGitForensics(
     try {
       const firstStats = await getCommitStats(owner, repo, chronological[0].sha);
       firstCommitAdditions = firstStats.additions;
-
-      // Sum additions from commit summaries (already fetched, but without stats)
-      // We approximate with the first commit's additions and assume others are non-zero
-      // For a full implementation, batch-fetch all commit stats
-      totalAdditions = firstCommitAdditions; // will be improved in Module A full implementation
+      totalAdditions = firstCommitAdditions;
       chronological[0].additions = firstStats.additions;
       chronological[0].deletions = firstStats.deletions;
       chronological[0].filesChanged = firstStats.filesChanged;
-
-      initialCommitRatio = totalAdditions > 0
-        ? firstCommitAdditions / totalAdditions
-        : 0;
+      // initialCommitRatio remains 0 until we can batch-fetch all stats.
     } catch {
       // Non-fatal — proceed without this signal
-      initialCommitRatio = 0;
     }
   }
 
@@ -103,8 +100,10 @@ export async function runGitForensics(
   if (commitCount >= 2) {
     const firstDate = new Date(chronological[0].date).getTime();
     const lastDate  = new Date(chronological[commitCount - 1].date).getTime();
-    timeSpanHours = (lastDate - firstDate) / (1000 * 60 * 60);
-    timeSpanDays  = timeSpanHours / 24;
+    if (Number.isFinite(firstDate) && Number.isFinite(lastDate)) {
+      timeSpanHours = (lastDate - firstDate) / (1000 * 60 * 60);
+      timeSpanDays  = timeSpanHours / 24;
+    }
   }
 
   // ── Signal 4: Commit message quality ──────────────────────────────────────
@@ -119,7 +118,9 @@ export async function runGitForensics(
   for (let i = 1; i < chronological.length; i++) {
     const prev = new Date(chronological[i - 1].date).getTime();
     const curr = new Date(chronological[i].date).getTime();
-    intervals.push((curr - prev) / 1000); // seconds
+    if (Number.isFinite(prev) && Number.isFinite(curr)) {
+      intervals.push((curr - prev) / 1000);
+    }
   }
   const intervalStdDev = stdDev(intervals);
 

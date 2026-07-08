@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import type { GeneratedQuestion, AnswerScoreResult, ReportResponse } from "@/types";
+import type { GeneratedQuestion, AnswerScoreResult, ReportResponse, AnswerResponse } from "@/types";
+import { fetchJson } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Loader2, AlertTriangle, Maximize2, ShieldAlert } from "lucide-react";
 
@@ -27,16 +28,14 @@ export default function QuestionsPage() {
   useEffect(() => {
     if (!reportId) return;
     async function loadReport() {
-      try {
-        const res  = await fetch(`/api/report/${reportId}`);
-        const data = (await res.json()) as ReportResponse;
-        if (!res.ok || !data.report) throw new Error("Could not load report.");
-        setQuestions(data.report.questions);
+      const { ok, data, error } = await fetchJson<ReportResponse>(`/api/report/${reportId}`);
+      if (!ok || !data?.report) {
+        setError(error ?? "Could not load report.");
         setLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load questions.");
-        setLoading(false);
+        return;
       }
+      setQuestions(data.report.questions);
+      setLoading(false);
     }
     loadReport();
   }, [reportId]);
@@ -85,33 +84,31 @@ export default function QuestionsPage() {
     const currentQuestion = questions[currentIndex];
     const timeTakenSeconds = Math.floor((Date.now() - questionStartRef.current) / 1000);
 
-    try {
-      const res  = await fetch("/api/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          report_id: reportId,
-          question_id: currentQuestion.question_id,
-          answer_text: answer,
-          time_taken_seconds: timeTakenSeconds,
-          tab_out_count: tabOuts,
-        }),
-      });
-      const data = await res.json();
+    const { ok, data, error } = await fetchJson<AnswerResponse>("/api/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        report_id: reportId,
+        question_id: currentQuestion.question_id,
+        answer_text: answer,
+        time_taken_seconds: timeTakenSeconds,
+        tab_out_count: tabOuts,
+      }),
+    });
 
-      if (!res.ok || data.status === "error") throw new Error(data.error ?? "Failed to submit.");
-
-      setAnswer("");
+    if (!ok || !data || data.status === "error") {
+      setError(error ?? "Failed to submit.");
       setSubmitting(false);
+      return;
+    }
 
-      if (currentIndex < questions.length - 1) {
-        setCurrentIndex((i) => i + 1);
-      } else {
-        router.push(`/report/${reportId}`);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error submitting answer.");
-      setSubmitting(false);
+    setAnswer("");
+    setSubmitting(false);
+
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex((i) => i + 1);
+    } else {
+      router.push(`/report/${reportId}`);
     }
   }
 
@@ -125,7 +122,7 @@ export default function QuestionsPage() {
     return (
       <main className="w-full max-w-[720px] mx-auto pt-16 text-center">
         <p className="text-accent-red font-body font-medium mb-6">{error || "No questions could be generated."}</p>
-        <Button onClick={() => router.push("/")}>Try another repo</Button>
+        <Button onClick={() => router.push("/verify")}>Try another repo</Button>
       </main>
     );
   }

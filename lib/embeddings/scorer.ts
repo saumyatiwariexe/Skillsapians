@@ -11,23 +11,29 @@
  * PRD Reference: §7
  */
 
-import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel, TaskType } from "@google/generative-ai";
 import type { GeneratedQuestion, AnswerScoreResult } from "@/types";
 
 interface AnswerIntegrityInput {
   timeTakenSeconds?: number;
   tabOutCount?: number;
+  previousAnswers?: string[];
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Embedding model
+// Embedding model (cached)
 // ──────────────────────────────────────────────────────────────────────────────
+
+let cachedModel: GenerativeModel | null = null;
 
 function getEmbeddingModel() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY not set");
-  const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: "gemini-embedding-2" });
+  if (!cachedModel) {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    cachedModel = genAI.getGenerativeModel({ model: "gemini-embedding-2" });
+  }
+  return cachedModel;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -112,8 +118,9 @@ export function computeEntityOverlap(
 // ──────────────────────────────────────────────────────────────────────────────
 
 export function computeSpecificityScore(answer: string): number {
-  const wordCount = answer.trim().split(/\s+/).length;
-  return Math.min(1.0, wordCount / 25);
+  const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount < 10) return 0;
+  return Math.min(1.0, wordCount / 30);
 }
 
 export function computeTimeScore(answer: string, timeTakenSeconds = 0): number {
@@ -178,7 +185,7 @@ export async function scoreAnswer(
   const timeTakenSeconds   = Math.max(0, Math.round(integrity.timeTakenSeconds ?? 0));
   const tabOutCount        = Math.max(0, Math.round(integrity.tabOutCount ?? 0));
   const timeScore          = computeTimeScore(answerText, timeTakenSeconds);
-  const integrityPenalty   = computeIntegrityPenalty(timeScore, tabOutCount);
+  const baseIntegrityPenalty   = computeIntegrityPenalty(timeScore, tabOutCount);
   const aiGeneratedFlag    = detectAIGeneratedAnswer(answerText);
 
   const rawQuestionScore =
@@ -187,6 +194,20 @@ export async function scoreAnswer(
       0.15 * specificityScore +
       0.15 * timeScore) *
     100;
+
+  let duplicatePenalty = 0;
+  const previousAnswers = integrity.previousAnswers ?? [];
+  if (previousAnswers.length > 0) {
+    let maxSim = 0;
+    for (const prev of previousAnswers) {
+      const prevEmb = await embed(prev, TaskType.RETRIEVAL_DOCUMENT);
+      const sim = cosineSimilarity(answerEmbedding, prevEmb);
+      if (sim > maxSim) maxSim = sim;
+    }
+    duplicatePenalty = maxSim > 0.88 ? 35 : maxSim > 0.75 ? 15 : 0;
+  }
+
+  const integrityPenalty = baseIntegrityPenalty + duplicatePenalty;
   const finalQuestionScore = Math.max(0, Math.min(100, rawQuestionScore - integrityPenalty));
 
   return {

@@ -13,7 +13,11 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const { searchParams, origin } = new URL(req.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/profile";
+  let next = searchParams.get("next") ?? "/profile";
+
+  if (next && !next.startsWith("/")) {
+    next = "/profile";
+  }
 
   const base = APP_URL || origin;
 
