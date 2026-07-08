@@ -59,7 +59,7 @@ export default function VerifyPage() {
             <input
               id="repo-url-input"
               type="url"
-              className="w-full bg-canvas border border-subtle rounded-md px-4 py-3 font-body text-sm text-text-primary focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-surface transition-all placeholder:text-text-tertiary"
+              className="w-full bg-canvas border border-subtle rounded-md px-4 py-3 font-body text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-2 focus:ring-accent-blue focus:ring-offset-2 focus:ring-offset-surface transition-all placeholder:text-text-tertiary"
               placeholder="https://github.com/username/repo"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
@@ -79,7 +79,7 @@ export default function VerifyPage() {
               id="skill-area-input"
               type="text"
               list="skill-area-suggestions"
-              className="w-full bg-canvas border border-subtle rounded-md px-4 py-3 font-body text-sm text-text-primary focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-surface transition-all placeholder:text-text-tertiary disabled:opacity-50"
+              className="w-full bg-canvas border border-subtle rounded-md px-4 py-3 font-body text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-2 focus:ring-accent-blue focus:ring-offset-2 focus:ring-offset-surface transition-all placeholder:text-text-tertiary disabled:opacity-50"
               placeholder="e.g. AI, ML, React, Overall"
               value={skillArea}
               onChange={(e) => setSkillArea(e.target.value)}
@@ -99,7 +99,7 @@ export default function VerifyPage() {
                   disabled={loading}
                   className={`px-2.5 py-1 rounded-full font-body text-[11px] border transition-colors disabled:opacity-50 ${
                     skillArea === s
-                      ? "border-accent-purple text-text-primary bg-accent-purple/10"
+                      ? "border-accent-blue text-text-primary bg-accent-blue/10"
                       : "border-subtle text-text-tertiary hover:text-text-secondary hover:border-text-tertiary"
                   }`}
                 >

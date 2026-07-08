@@ -120,7 +120,7 @@ export default function ReportPage() {
 
           {report.badge && (
             <div className="mt-5 flex items-center gap-3 bg-surface border border-subtle rounded-full pl-2 pr-5 py-1">
-              <span className="w-9 h-9 rounded-full bg-accent-purple/15 text-accent-purple flex items-center justify-center">
+              <span className="w-9 h-9 rounded-full bg-accent-blue/15 text-accent-blue flex items-center justify-center">
                 <Award className="w-5 h-5" />
               </span>
               <div className="text-left">

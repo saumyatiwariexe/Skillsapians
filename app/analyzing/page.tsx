@@ -149,8 +149,8 @@ function AnalyzingPage() {
                       className="relative flex items-center gap-3 mb-3 animate-[fadeIn_0.3s_ease-out]"
                       style={{ animationDelay: `${i * 80}ms` }}
                     >
-                      <span className="absolute -left-[23px] w-3.5 h-3.5 rounded-full bg-accent-purple border-2 border-surface" />
-                      <span className="text-accent-purple">{s.icon}</span>
+                      <span className="absolute -left-[23px] w-3.5 h-3.5 rounded-full bg-accent-blue border-2 border-surface" />
+                      <span className="text-accent-blue">{s.icon}</span>
                       <span className="font-body text-xs text-text-tertiary w-28 shrink-0">{s.label}</span>
                       <span className="font-body text-sm text-text-primary truncate">{s.value}</span>
                     </div>
@@ -168,7 +168,7 @@ function AnalyzingPage() {
                     <li key={step.id} className="flex items-center gap-4">
                       <div className="shrink-0 flex items-center justify-center w-6 h-6">
                         {isDone && <Check className="text-accent-green w-5 h-5" />}
-                        {isActive && <Loader2 className="text-accent-purple w-5 h-5 animate-spin" />}
+                        {isActive && <Loader2 className="text-accent-blue w-5 h-5 animate-spin" />}
                         {isPending && <span className="w-2 h-2 rounded-full bg-border-subtle" />}
                       </div>
                       <span className={`font-body text-sm transition-colors duration-300 ${isDone ? "text-text-primary" : isActive ? "text-text-primary font-medium" : "text-text-tertiary"}`}>

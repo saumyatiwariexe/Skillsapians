@@ -61,7 +61,7 @@ export function UserMenu() {
       <div className="relative" data-user-menu>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-full"
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-full"
         >
           {avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -102,7 +102,7 @@ export function UserMenu() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Sign in"
-        className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-full"
+        className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-full"
       >
         <UserCircle size={24} strokeWidth={1.5} />
       </button>

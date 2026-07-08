@@ -20,7 +20,7 @@ export default function ReportsPage() {
   }, [user, authLoading, router]);
 
   if (!checked && !user) {
-    return <main className="w-full flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-accent-purple" /></main>;
+    return <main className="w-full flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-accent-blue" /></main>;
   }
 
   return (

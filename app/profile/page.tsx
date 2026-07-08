@@ -12,7 +12,6 @@ import type { ProfileResponse, ProfileReportSummary, ReportBadge } from "@/types
 const BADGE_TONE: Record<ReportBadge["tone"], string> = {
   green:  "bg-accent-green/10 text-accent-green border-accent-green/30",
   blue:   "bg-accent-blue/10 text-accent-blue border-accent-blue/30",
-  purple: "bg-accent-purple/10 text-accent-purple border-accent-purple/30",
   yellow: "bg-accent-yellow/10 text-accent-yellow border-accent-yellow/30",
   red:    "bg-accent-red/10 text-accent-red border-accent-red/30",
 };
@@ -55,14 +54,14 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <main className="w-full flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-accent-purple" /></main>;
+    return <main className="w-full flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-accent-blue" /></main>;
   }
 
   if (notAuth || !user) {
     return (
       <main className="w-full max-w-[480px] mx-auto pt-[12vh]">
         <section className="bg-surface border border-subtle rounded-md p-8 text-center">
-          <div className="w-14 h-14 bg-accent-purple/15 text-accent-purple rounded-full flex items-center justify-center mx-auto mb-5">
+          <div className="w-14 h-14 bg-accent-blue/15 text-accent-blue rounded-full flex items-center justify-center mx-auto mb-5">
             <LayoutDashboard className="w-7 h-7" />
           </div>
           <h1 className="font-display font-medium text-xl text-text-primary mb-2">Your Report Card</h1>
@@ -97,7 +96,7 @@ export default function ProfilePage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatar} alt="" className="w-16 h-16 rounded-full object-cover border border-subtle" />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-accent-purple/15 text-accent-purple flex items-center justify-center font-display font-bold text-2xl">
+            <div className="w-16 h-16 rounded-full bg-accent-blue/15 text-accent-blue flex items-center justify-center font-display font-bold text-2xl">
               {name.charAt(0).toUpperCase()}
             </div>
           )}

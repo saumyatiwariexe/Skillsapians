@@ -140,7 +140,7 @@ export default function MinecraftTerrainCanvas({ stage, progress = 0 }: Minecraf
       </div>
       <div className="absolute bottom-3 left-3 right-3 h-1 bg-surface-alt/50 rounded-full overflow-hidden">
         <div
-          className="h-full bg-accent-purple transition-all duration-500 ease-out rounded-full"
+          className="h-full bg-accent-blue transition-all duration-500 ease-out rounded-full"
           style={{ width: `${Math.min(100, Math.round(progress * 100))}%` }}
         />
       </div>

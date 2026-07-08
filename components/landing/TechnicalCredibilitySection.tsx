@@ -8,21 +8,25 @@ const items = [
     icon: GitCommit,
     title: "Git History Analysis",
     description: "Deterministic repository signals.",
+    accent: "#3B82F6",
   },
   {
     icon: Braces,
     title: "AST Parsing",
     description: "Questions generated from actual code structure.",
+    accent: "#FFFFFF",
   },
   {
     icon: BarChart3,
     title: "Embedding Similarity",
     description: "Understanding measured against repository facts.",
+    accent: "#22C55E",
   },
   {
     icon: FileText,
     title: "Transparent Reports",
     description: "Every score includes supporting evidence.",
+    accent: "#3B82F6",
   },
 ];
 
@@ -32,31 +36,37 @@ export default function TechnicalCredibilitySection() {
   return (
     <section
       ref={ref}
-      className="section-enter border-t border-border-subtle"
-      style={{ backgroundColor: "#121212", padding: "96px 0" }}
+      className="section-enter border-t border-subtle"
+      style={{ backgroundColor: "#050505", padding: "120px 0" }}
     >
       <div className="max-w-6xl mx-auto px-6">
-        <h2 className="stagger-1 font-display font-semibold text-text-primary text-center"
-          style={{ fontSize: "clamp(24px, 3vw, 36px)", lineHeight: 1.3, maxWidth: "800px", margin: "0 auto 48px" }}>
+        <h2 className="stagger-1 font-display font-extrabold text-text-primary text-center"
+          style={{
+            fontSize: "clamp(32px, 4vw, 56px)",
+            lineHeight: 1.15,
+            letterSpacing: "-0.02em",
+            maxWidth: "800px",
+            margin: "0 auto 64px",
+          }}>
           Evidence, Not Opinions
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {items.map((item, idx) => (
             <div
               key={idx}
-              className={`stagger-${idx + 1} p-8 rounded-2xl border border-border-subtle card-hover text-center`}
-              style={{ backgroundColor: "#1B1B1E" }}
+              className={`stagger-${idx + 1} p-8 rounded-2xl border border-subtle card-hover text-center`}
+              style={{ backgroundColor: "#111111" }}
             >
               <div
                 className="inline-flex items-center justify-center p-3 rounded-xl mb-5"
-                style={{ backgroundColor: "rgba(124, 108, 246, 0.12)" }}
+                style={{ backgroundColor: `${item.accent}12` }}
               >
-                <item.icon size={24} style={{ color: "#7C6CF6" }} />
+                <item.icon size={24} style={{ color: item.accent }} />
               </div>
               <h3
-                className="font-display font-semibold text-text-primary mb-2"
-                style={{ fontSize: "16px" }}
+                className="font-display font-bold text-text-primary mb-2"
+                style={{ fontSize: "16px", letterSpacing: "-0.01em" }}
               >
                 {item.title}
               </h3>

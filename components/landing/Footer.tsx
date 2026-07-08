@@ -27,23 +27,23 @@ function LinkedInIcon({ size = 20 }: { size?: number }) {
 export default function Footer() {
   return (
     <footer
-      className="border-t border-border-subtle"
-      style={{ backgroundColor: "#121212", padding: "64px 0 48px" }}
+      className="border-t border-subtle"
+      style={{ backgroundColor: "#050505", padding: "64px 0 48px" }}
     >
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col items-center text-center gap-6 mb-12">
-          <span className="font-display font-bold text-2xl text-text-primary">
+          <span className="font-display font-bold text-2xl text-text-primary tracking-tight">
             Skillsapians
           </span>
-          <p className="font-body text-text-secondary max-w-md" style={{ fontSize: "16px", lineHeight: 1.6 }}>
+          <p className="font-body text-text-secondary max-w-md" style={{ fontSize: "16px", lineHeight: 1.7 }}>
             Making skills-based hiring trustworthy.
           </p>
-          <span className="font-mono text-xs text-text-tertiary px-4 py-2 rounded-full border border-subtle bg-surface">
+          <span className="font-mono text-xs text-text-tertiary px-4 py-2 rounded-full border border-subtle" style={{ backgroundColor: "#111111" }}>
             Built for NYC CodeQuest 2026 — EDU-01
           </span>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-border-subtle gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-subtle gap-4">
           <span className="font-body text-sm text-text-tertiary">
             &copy; 2026 Skillsapians
           </span>

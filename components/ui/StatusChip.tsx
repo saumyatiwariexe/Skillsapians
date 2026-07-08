@@ -27,7 +27,7 @@ export const StatusChip = React.forwardRef<HTMLDivElement, StatusChipProps>(
             "bg-accent-yellow/15 text-accent-yellow": variant === "fair",
             "bg-accent-red/15 text-accent-red": variant === "flagged",
             "bg-accent-orange/15 text-accent-orange": variant === "pending",
-            "bg-accent-purple/15 text-accent-purple": variant === "active",
+            "bg-white/10 text-white": variant === "active",
           },
           className
         )}

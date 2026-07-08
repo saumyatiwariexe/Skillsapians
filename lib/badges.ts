@@ -45,7 +45,7 @@ export function assignBadge(input: BadgeInput): ReportBadge {
       key: "ai-expert",
       label: "AI Expert",
       description: "Strong code understanding in an AI, ML, or data-heavy verification.",
-      tone: "purple",
+      tone: "blue",
     };
   }
 

@@ -114,7 +114,7 @@ export default function QuestionsPage() {
 
   if (loading) {
     return (
-      <main className="w-full flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-accent-purple" /></main>
+      <main className="w-full flex justify-center pt-24"><Loader2 className="w-8 h-8 animate-spin text-accent-blue" /></main>
     );
   }
 
@@ -134,7 +134,7 @@ export default function QuestionsPage() {
     return (
       <main className="w-full max-w-[520px] mx-auto pt-[12vh]">
         <section className="bg-surface border border-subtle rounded-md p-8 text-center">
-          <div className="w-14 h-14 bg-accent-purple/15 text-accent-purple rounded-full flex items-center justify-center mx-auto mb-5">
+          <div className="w-14 h-14 bg-accent-blue/15 text-accent-blue rounded-full flex items-center justify-center mx-auto mb-5">
             <ShieldAlert className="w-7 h-7" />
           </div>
           <h1 className="font-display font-medium text-xl text-text-primary mb-2">Ready to verify?</h1>
@@ -177,7 +177,7 @@ export default function QuestionsPage() {
         </div>
         <div className="w-full h-1 bg-subtle rounded-full overflow-hidden">
           <div 
-            className="h-full bg-accent-purple transition-all duration-500 ease-out rounded-full"
+            className="h-full bg-accent-blue transition-all duration-500 ease-out rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -211,7 +211,7 @@ export default function QuestionsPage() {
       <section>
         <form onSubmit={handleSubmitAnswer} className="flex flex-col gap-4">
           <textarea
-            className="w-full bg-surface border border-subtle rounded-md p-4 font-body text-sm text-text-primary focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-canvas transition-all resize-y min-h-[140px] placeholder:text-text-tertiary"
+            className="w-full bg-surface border border-subtle rounded-md p-4 font-body text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-2 focus:ring-accent-blue focus:ring-offset-2 focus:ring-offset-canvas transition-all resize-y min-h-[140px] placeholder:text-text-tertiary"
             placeholder="Explain your reasoning — the more specific, the better."
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}

@@ -14,16 +14,22 @@ export default function WhyThisMattersSection() {
   return (
     <section
       ref={ref}
-      className="section-enter border-t border-border-subtle"
-      style={{ backgroundColor: "#1B1B1E", padding: "96px 0" }}
+      className="section-enter border-t border-subtle"
+      style={{ backgroundColor: "#050505", padding: "120px 0" }}
     >
       <div className="max-w-4xl mx-auto px-6">
-        <h2 className="stagger-1 font-display font-semibold text-text-primary text-center"
-          style={{ fontSize: "clamp(24px, 3vw, 36px)", lineHeight: 1.3, maxWidth: "800px", margin: "0 auto 48px" }}>
+        <h2 className="stagger-1 font-display font-extrabold text-text-primary text-center"
+          style={{
+            fontSize: "clamp(32px, 4vw, 56px)",
+            lineHeight: 1.15,
+            letterSpacing: "-0.02em",
+            maxWidth: "800px",
+            margin: "0 auto 64px",
+          }}>
           Why This Matters
         </h2>
 
-        <div className="space-y-10">
+        <div className="space-y-12">
           {statements.map((text, idx) => (
             <p
               key={idx}
@@ -34,6 +40,7 @@ export default function WhyThisMattersSection() {
                 maxWidth: "800px",
                 margin: "0 auto",
                 fontWeight: 500,
+                letterSpacing: "-0.01em",
               }}
             >
               &ldquo;{text}&rdquo;

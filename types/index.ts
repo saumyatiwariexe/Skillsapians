@@ -124,7 +124,7 @@ export interface ReportBadge {
   key: string;
   label: string;
   description: string;
-  tone: "green" | "blue" | "purple" | "yellow" | "red";
+  tone: "green" | "blue" | "yellow" | "red";
 }
 
 export interface VerifiedSkillReport {

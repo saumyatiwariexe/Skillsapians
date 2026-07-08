@@ -18,21 +18,19 @@ const config: Config = {
         "text-secondary": "var(--text-secondary)",
         "text-tertiary": "var(--text-tertiary)",
         
-        "accent-purple": "var(--accent-purple)",
         "accent-blue": "var(--accent-blue)",
         "accent-green": "var(--accent-green)",
-        "accent-orange": "var(--accent-orange)",
+        "accent-amber": "var(--accent-amber)",
         "accent-red": "var(--accent-red)",
-        "accent-yellow": "var(--accent-yellow)",
 
         "txt-primary": "var(--text-primary)",
         "txt-secondary": "var(--text-secondary)",
         "txt-tertiary": "var(--text-tertiary)",
         "border-subtle": "var(--border-subtle)",
 
-        purple: "var(--accent-purple)",
         blue: "var(--accent-blue)",
         green: "var(--accent-green)",
+        amber: "var(--accent-amber)",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
@@ -52,7 +50,7 @@ const config: Config = {
       borderRadius: {
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
-        xl: "16px",
+        lg: "var(--radius-lg)",
         full: "var(--radius-full)",
       },
       keyframes: {
@@ -60,14 +58,24 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(8px)" },
           to:   { opacity: "1", transform: "translateY(0)" },
         },
-        "pulse-line": {
-          "0%, 100%": { opacity: "0.3" },
-          "50%": { opacity: "0.8" },
+        "pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
+        "flow-line": {
+          "0%": { strokeDashoffset: "24" },
+          "100%": { strokeDashoffset: "0" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-6px)" },
         },
       },
       animation: {
         "fade-in": "fade-in 0.2s ease-out forwards",
-        "pulse-line": "pulse-line 2s ease-in-out infinite",
+        "pulse": "pulse 2s ease-in-out infinite",
+        "flow-line": "flow-line 1.5s linear infinite",
+        "float": "float 4s ease-in-out infinite",
       },
       maxWidth: {
         content: "840px",

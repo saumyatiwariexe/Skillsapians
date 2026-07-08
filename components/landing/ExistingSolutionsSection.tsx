@@ -49,30 +49,38 @@ export default function ExistingSolutionsSection() {
   return (
     <section
       ref={ref}
-      className="section-enter border-t border-border-subtle"
-      style={{ backgroundColor: "#1B1B1E", padding: "96px 0" }}
+      className="section-enter border-t border-subtle"
+      style={{ backgroundColor: "#050505", padding: "120px 0" }}
     >
       <div className="max-w-6xl mx-auto px-6">
-        <h2 className="stagger-1 font-display font-semibold text-text-primary text-center"
-          style={{ fontSize: "clamp(24px, 3vw, 36px)", lineHeight: 1.3, maxWidth: "800px", margin: "0 auto 48px" }}>
-          Current Solutions Ask Candidates To Take Another Test
+        <h2 className="stagger-1 font-display font-extrabold text-text-primary text-center"
+          style={{
+            fontSize: "clamp(32px, 4vw, 56px)",
+            lineHeight: 1.15,
+            letterSpacing: "-0.02em",
+            maxWidth: "800px",
+            margin: "0 auto 64px",
+          }}>
+          Current solutions ask candidates to take another test.
         </h2>
 
         <div className="stagger-2 space-y-4">
           {rows.map((row) => (
             <div
               key={row.name}
-              className="p-8 rounded-2xl border border-border-subtle card-hover"
+              className="p-8 md:p-10 rounded-2xl border border-subtle card-hover"
               style={{
-                backgroundColor: row.isUs ? "rgba(124, 108, 246, 0.06)" : "#121212",
+                backgroundColor: row.isUs ? "rgba(59, 130, 246, 0.04)" : "#111111",
+                borderColor: row.isUs ? "rgba(59, 130, 246, 0.2)" : "#222222",
               }}
             >
               <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 items-start">
                 <h3
-                  className="font-display font-semibold"
+                  className="font-display font-bold"
                   style={{
                     fontSize: "18px",
-                    color: row.isUs ? "#7C6CF6" : "#F5F5F7",
+                    color: row.isUs ? "#3B82F6" : "#FFFFFF",
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   {row.name}
@@ -83,9 +91,9 @@ export default function ExistingSolutionsSection() {
                       <Check
                         size={18}
                         className="mt-0.5 shrink-0"
-                        style={{ color: row.isUs ? "#7C6CF6" : "#A0A0A8" }}
+                        style={{ color: row.isUs ? "#3B82F6" : "#525252" }}
                       />
-                      <span className="font-body text-text-secondary" style={{ fontSize: "15px", lineHeight: 1.5 }}>
+                      <span className="font-body text-text-secondary" style={{ fontSize: "15px", lineHeight: 1.6 }}>
                         {point}
                       </span>
                     </li>

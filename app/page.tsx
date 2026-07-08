@@ -11,7 +11,7 @@ import Footer from "@/components/landing/Footer";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen w-full" style={{ backgroundColor: "#121212" }}>
+    <div className="min-h-screen w-full" style={{ backgroundColor: "#050505" }}>
       <HeroSection />
       <ProblemSection />
       <ExistingSolutionsSection />
